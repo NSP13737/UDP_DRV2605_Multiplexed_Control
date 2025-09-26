@@ -2,11 +2,11 @@
 #include <cmath> // For std::round()
 
 
-// Assumes unsigned input
+// Assumes signed RTP input (127-255)
 uint8_t pctToRtp(float percent) {
-  if (percent <= 0.0f) return 0;
+  if (percent <= 0.0f) return 127;
   if (percent >= 100.0f) return 255;
-  return (uint8_t)round((percent / 100.0f) * 255.0f);
+  return (uint8_t)(round((percent / 100.0f) * 128.0f)+127);
 }
 
 HapticPulser::HapticPulser(Adafruit_DRV2605 &d) : drv(d), state(IDLE) {}
