@@ -2,7 +2,7 @@
 #define HAPTICPULSER_H
 
 #include <Arduino.h>
-#include <Adafruit_DRV2605.h>
+#include "Adafruit_DRV2605.h"
 
 // Utility function prototype (if you want it exposed here)
 uint8_t pctToRtp(float percent);

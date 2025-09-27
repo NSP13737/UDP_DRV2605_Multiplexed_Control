@@ -1,5 +1,5 @@
 #include <Wire.h>
-#include <Adafruit_DRV2605.h>
+#include "Adafruit_DRV2605.h"
 #include "HapticPulser.h"
 
 Adafruit_DRV2605 drv;
