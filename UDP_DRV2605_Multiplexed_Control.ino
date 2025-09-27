@@ -15,12 +15,21 @@ unsigned long onTimeMs = 700;
 // Pulser cycle tracking using the pulser's own state
 bool prevPulserOn = false;        // previous observed state from pulser.isOn()
 
+void multiplexSelect(uint8_t i) {
+  if (i > 7) return;
+ 
+  Wire.beginTransmission(MULTIPLEX_ADDR);
+  Wire.write(1 << i);
+  Wire.endTransmission();  
+}
+
 void setup() {
   Serial.begin(9600);
   Wire.begin();
   Serial.println("Program Start");
 
   for (int i = 0; i < NUM_DRIVERS; i++) {
+    multiplexSelect(i);
     drv[i] = new Adafruit_DRV2605();
     // Start each drv
     if (!drv[i]->begin()) {
@@ -39,8 +48,9 @@ void setup() {
 
 bool currentOn = false;
 void loop() {
-  
+
   for (int i = 0; i < NUM_DRIVERS; i++) {
+    multiplexSelect(i);
     pulser[i]->update();
   }
   
