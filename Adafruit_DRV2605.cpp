@@ -80,8 +80,9 @@ bool Adafruit_DRV2605::init() {
 
   writeRegister8(DRV2605_REG_RTPIN, 0x00); // no real-time-playback
 
-  writeRegister8(DRV2605_REG_WAVESEQ1, 1); // strong click
-  writeRegister8(DRV2605_REG_WAVESEQ2, 0); // end sequence
+  //NOTE: These two lines were edited out by Nathan (NSP13737)
+  //writeRegister8(DRV2605_REG_WAVESEQ1, 1); // strong click
+  //writeRegister8(DRV2605_REG_WAVESEQ2, 0); // end sequence
 
   writeRegister8(DRV2605_REG_OVERDRIVE, 0); // no overdrive
 
@@ -92,14 +93,19 @@ bool Adafruit_DRV2605::init() {
 
   // ERM open loop
 
-  // turn off N_ERM_LRA
-  writeRegister8(DRV2605_REG_FEEDBACK,
-                 readRegister8(DRV2605_REG_FEEDBACK) & 0x7F);
-  // turn on ERM_OPEN_LOOP
-  writeRegister8(DRV2605_REG_CONTROL3,
-                 readRegister8(DRV2605_REG_CONTROL3) | 0x20);
+  // // turn off N_ERM_LRA (turns to erm mode)
+  // writeRegister8(DRV2605_REG_FEEDBACK,
+  //                readRegister8(DRV2605_REG_FEEDBACK) & 0x7F);
 
-  //NOTE: Below is custom addition by NSP13737
+  // turn on N_ERM_LRA (turns on lra mode)
+  writeRegister8(DRV2605_REG_FEEDBACK,
+                 readRegister8(DRV2605_REG_FEEDBACK) | (1<<7));  
+                 
+  // turn on ERM_OPEN_LOOP
+  //writeRegister8(DRV2605_REG_CONTROL3,
+                 //readRegister8(DRV2605_REG_CONTROL3) | 0x20);
+
+  //NOTE: Below is custom addition by Nathan (NSP13737)
   //SETUP: Closed-loop unidirectional mode
   //NOTE: This may not work, because above code by Adafruit sets up for open erm
 
@@ -108,6 +114,10 @@ bool Adafruit_DRV2605::init() {
   uint8_t ctrl3 = readRegister8(DRV2605_REG_CONTROL3);
   ctrl3 |= (1 << 3); // DATA_FORMAT_RTP = unsigned
   writeRegister8(DRV2605_REG_CONTROL3, ctrl3);
+
+  // ctrl3 = readRegister8(DRV2605_REG_CONTROL3);
+  // ctrl3 &= ~(1 << 5); // ERM_OPEN_LOOP = closed loop
+  // writeRegister8(DRV2605_REG_CONTROL3, ctrl3);
 
   uint8_t ctrl2 = readRegister8(DRV2605_REG_CONTROL2);
   ctrl2 &= ~(1 << 7); //Setting 7th bit (BiDir_Input) to 0
