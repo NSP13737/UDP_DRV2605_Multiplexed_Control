@@ -10,8 +10,8 @@ HapticPulser* pulser[NUM_DRIVERS];
 
 //Below is for testing different vibrations
 float intensity = 100.0f;
-unsigned long offTimeMs = 700;
-unsigned long onTimeMs = 700;
+unsigned long offTimeMs = 20;
+unsigned long onTimeMs = 20;
 // Pulser cycle tracking using the pulser's own state
 bool prevPulserOn = false;        // previous observed state from pulser.isOn()
 
@@ -39,7 +39,7 @@ void setup() {
     delay(50);
     // Create and start each pulser
     pulser[i] = new HapticPulser(*drv[i]);
-    pulser[i]->begin(intensity, offTimeMs, onTimeMs, false, 3.8f, 4.0f);
+    pulser[i]->begin(intensity, offTimeMs, onTimeMs, true, 3.8f, 4.0f);
     pulser[i]->start();
   }
   delay(50);
@@ -54,9 +54,6 @@ void loop() {
     pulser[i]->update();
   }
   
-
-
-
   // //NOTE: Code below is for varying params during runtime
 
   // // Use the pulser's own reported state to detect a completed cycle (OFF -> ON)

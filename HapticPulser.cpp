@@ -9,6 +9,13 @@ uint8_t pctToRtp(float percent) {
   return (uint8_t)(round((percent / 100.0f) * 128.0f)+127);
 }
 
+// Assumes unsigned RTP input (127-255)
+// uint8_t pctToRtp(float percent) {
+//   if (percent <= 0.0f) return 0;
+//   if (percent >= 100.0f) return 255;
+//   return (uint8_t)(round((percent / 100.0f)*255.0f));
+// }
+
 HapticPulser::HapticPulser(Adafruit_DRV2605 &d) : drv(d), state(IDLE) {}
 
 bool HapticPulser::begin(float intensityPct_, unsigned long onMs_, unsigned long offMs_, bool doAutoCal, float ratedVoltage, float odClamp) {

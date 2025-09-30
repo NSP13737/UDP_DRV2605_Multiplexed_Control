@@ -43,7 +43,7 @@ private:
    *
    * @param v_erm_clamp_volts Maximum voltage of ERM according to datasheet
    * 
-   * @return true if auto-calibration completed successfully, false otherwise.
+   * @return value to be placed in overdrive clamp register for ERM.
    */
   uint8_t get_erm_od_clamp_reg(float v_erm_clamp_volts);
   

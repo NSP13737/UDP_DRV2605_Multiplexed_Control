@@ -46,12 +46,12 @@ uint8_t HapticPulser::get_erm_od_clamp_reg(float v_erm_clamp_volts) {
     return static_cast<uint8_t>(std::round(reg_value));
 }
 
-
 bool HapticPulser::runAutoCal(float ratedVoltage, float odClamp) {
     uint8_t rated_voltage_reg = 0;
     uint8_t od_clamp_reg = 0;
 
-    // 1) Configure motor type
+    // 1) Configure motor type    
+    //for erm
     this->drv.useERM();
     rated_voltage_reg = (uint8_t)(ratedVoltage / 0.02133f); // convert from voltage to register value
     od_clamp_reg = get_erm_od_clamp_reg(odClamp);
