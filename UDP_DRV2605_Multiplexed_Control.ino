@@ -2,7 +2,10 @@
 #include "Adafruit_DRV2605.h"
 #include "belt_utils.h"
 #include "udp_utils.h"
-// START Testing WiFi
+
+#define INTENSITY_CONDITION 1
+
+
 const char *ssid = "ESP32_AP";
 const char *password = "12345678";
 const int localUdpPort = 4210;
@@ -11,26 +14,18 @@ std::array<float,8> received_distances = {0}; // arr for distance floats
 
 float prev_val = 0; // this is for testing in loop()
 
-
-
-
-
-
-// END Testing WiFi
-
-
 void setup() {
   Serial.begin(9600);
-
-  // // START Testing WiFi
-  
-  // // END Testing Wifi
   setupWireless(ssid, password, localUdpPort);
   Wire.begin();
   Serial.println("Program Start");
   
-  setupBelt();
-  
+  if (!setupBelt()) {
+    Serial.println("Belt setup failed");
+    while(1) {
+      delay(100);
+    }
+  }
   
 }
 
@@ -46,7 +41,7 @@ void loop() {
       prev_val = received_distances[0];
   }
 
-  //updateBelt(incomingPacket);
+  updateBelt(received_distances, INTENSITY_CONDITION);
   
   
 }

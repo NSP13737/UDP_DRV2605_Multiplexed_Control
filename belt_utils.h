@@ -17,10 +17,13 @@ bool setupBelt();
 
 /**
    * @brief When new input is received, update belt accordingly 
-   * @param command string with command and inputs
+   * @param received_distances C++ array with distances of all 8 measurements
+   * @param participant_condition tells program how to control belt based on which condition participants are in
    * @return none
    */
-void updateBelt(char *input);
+void updateBelt(std::array<float,8> received_distances, int participant_condition);
+
+void modulateIntensity(float distance, HapticPulser *pulser);
 
 
 

@@ -1,7 +1,9 @@
 #include "belt_utils.h"
 
-Adafruit_DRV2605* drv[NUM_DRIVERS];
-HapticPulser* pulser[NUM_DRIVERS];
+namespace {
+  Adafruit_DRV2605* drv[NUM_DRIVERS];
+  HapticPulser* pulser[NUM_DRIVERS];
+}
 
 void multiplexSelect(uint8_t i) {
   if (i > 7) return;
@@ -33,46 +35,22 @@ bool setupBelt() {
     return true;
 }
 
-void updateBelt(char *input) {
+void updateBelt(std::array<float,8> received_distances, int participant_condition) {
     
     for (int i = 0; i < NUM_DRIVERS; i++) {
     multiplexSelect(i);
+    switch (participant_condition) {
+      case 1: //change intensity
+        modulateIntensity(received_distances[i], pulser[i]);
+      case 2: //tbd
+        continue;
+    }
+    
     pulser[i]->update();
     }
 }
 
-// void updateBelt(char *input) {
-//     // Temporary debug: on every rising edge (OFF -> ON) increase intensity by 10%,
-//     // wrap to 10% after 100%, and apply via setIntensity().
-//     static bool prevOn[NUM_DRIVERS] = { false };
-//     static float debugIntensity[NUM_DRIVERS];
-//     static bool initialized = false;
 
-//     if (!initialized) {
-//         for (int i = 0; i < NUM_DRIVERS; ++i) {
-//             debugIntensity[i] = 10.0f; // start at 10%
-//             prevOn[i] = false;
-//         }
-//         initialized = true;
-//     }
-
-//     for (int i = 0; i < NUM_DRIVERS; i++) {
-//         multiplexSelect(i);
-//         pulser[i]->update();
-
-//         bool nowOn = pulser[i]->isOn();
-
-//         // Detect rising edge: just turned ON
-//         if (nowOn && !prevOn[i]) {
-//             debugIntensity[i] += 10.0f;
-//             if (debugIntensity[i] > 100.0f) debugIntensity[i] = 10.0f;
-//             pulser[i]->setIntensity(debugIntensity[i]);
-//             Serial.print("DEBUG: driver ");
-//             Serial.print(i);
-//             Serial.print(" intensity -> ");
-//             Serial.println(debugIntensity[i]);
-//         }
-
-//         prevOn[i] = nowOn;
-//     }
-// }
+void modulateIntensity(float distance, HapticPulser *pulser) {
+  pulser->setIntensity(distance);
+}
