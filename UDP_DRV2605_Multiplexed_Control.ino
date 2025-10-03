@@ -1,89 +1,52 @@
 #include <Wire.h>
 #include "Adafruit_DRV2605.h"
-#include "HapticPulser.h"
+#include "belt_utils.h"
+#include "udp_utils.h"
+// START Testing WiFi
+const char *ssid = "ESP32_AP";
+const char *password = "12345678";
+const int localUdpPort = 4210;
 
-#define MULTIPLEX_ADDR 0x70
-#define NUM_DRIVERS 1
+std::array<float,8> received_distances = {0}; // arr for distance floats
 
-Adafruit_DRV2605* drv[NUM_DRIVERS];
-HapticPulser* pulser[NUM_DRIVERS];
+float prev_val = 0; // this is for testing in loop()
 
-//Below is for testing different vibrations
-float intensity = 100.0f;
-unsigned long offTimeMs = 20;
-unsigned long onTimeMs = 20;
-// Pulser cycle tracking using the pulser's own state
-bool prevPulserOn = false;        // previous observed state from pulser.isOn()
 
-void multiplexSelect(uint8_t i) {
-  if (i > 7) return;
- 
-  Wire.beginTransmission(MULTIPLEX_ADDR);
-  Wire.write(1 << i);
-  Wire.endTransmission();  
-}
+
+
+
+
+// END Testing WiFi
+
 
 void setup() {
   Serial.begin(9600);
+
+  // // START Testing WiFi
+  
+  // // END Testing Wifi
+  setupWireless(ssid, password, localUdpPort);
   Wire.begin();
   Serial.println("Program Start");
-
-  for (int i = 0; i < NUM_DRIVERS; i++) {
-    multiplexSelect(i);
-    drv[i] = new Adafruit_DRV2605();
-    // Start each drv
-    if (!drv[i]->begin()) {
-      Serial.println("Could not find DRV2605 #" + i);
-      while(1) delay(10);
-    }
-    delay(50);
-    // Create and start each pulser
-    pulser[i] = new HapticPulser(*drv[i]);
-    pulser[i]->begin(intensity, offTimeMs, onTimeMs, true, 3.8f, 4.0f);
-    pulser[i]->start();
-  }
-  delay(50);
+  
+  setupBelt();
+  
   
 }
 
-bool currentOn = false;
 void loop() {
+  
+  received_distances = getDistanceFloats(received_distances);
 
-  for (int i = 0; i < NUM_DRIVERS; i++) {
-    multiplexSelect(i);
-    pulser[i]->update();
+  //Below if statement for testing getDistanceFloats
+  if (received_distances[0] != prev_val) {
+      Serial.print("Received: ");
+      Serial.println(received_distances[0]);
+      Serial.flush();
+      prev_val = received_distances[0];
   }
+
+  //updateBelt(incomingPacket);
   
-  // //NOTE: Code below is for varying params during runtime
-
-  // // Use the pulser's own reported state to detect a completed cycle (OFF -> ON)
-  // currentOn = pulser.isOn();
-  // // Detect transition from OFF to ON which indicates we completed an OFF period
-  // if (currentOn && !prevPulserOn) {
-  //   // completed a full cycle, update parameters
-  //   intensity += 5.0f;
-  //   onTimeMs += 0;
-  //   offTimeMs += 0;
-
-  //   // clamp/wrap values
-  //   if (intensity > 100.0f) intensity = 0.0f;
-  //   if (onTimeMs > 2000) onTimeMs = 100;
-  //   if (offTimeMs > 2000) offTimeMs = 100;
-
-  //   // apply the updated params to the pulser
-  //   pulser.setIntensity(intensity);
-  //   pulser.setOnOff(onTimeMs, offTimeMs);
-  //   Serial.println("Intensity: " + String(intensity) +
-  //              " On: " + String(onTimeMs) +
-  //              " Off: " + String(offTimeMs));
-  //   Serial.flush();
-  // }
-
-  // prevPulserOn = currentOn;
-
-  
-  
-
-    
   
 }
