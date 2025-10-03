@@ -94,16 +94,16 @@ bool Adafruit_DRV2605::init() {
   // ERM open loop
 
   // // turn off N_ERM_LRA (turns to erm mode)
-  // writeRegister8(DRV2605_REG_FEEDBACK,
-  //                readRegister8(DRV2605_REG_FEEDBACK) & 0x7F);
+  writeRegister8(DRV2605_REG_FEEDBACK,
+                 readRegister8(DRV2605_REG_FEEDBACK) & 0x7F);
 
   // turn on N_ERM_LRA (turns on lra mode)
-  writeRegister8(DRV2605_REG_FEEDBACK,
-                 readRegister8(DRV2605_REG_FEEDBACK) | (1<<7));  
+  // writeRegister8(DRV2605_REG_FEEDBACK,
+  //                readRegister8(DRV2605_REG_FEEDBACK) | (1<<7));  
                  
   // turn on ERM_OPEN_LOOP
-  //writeRegister8(DRV2605_REG_CONTROL3,
-                 //readRegister8(DRV2605_REG_CONTROL3) | 0x20);
+  writeRegister8(DRV2605_REG_CONTROL3,
+                 readRegister8(DRV2605_REG_CONTROL3) | 0x20);
 
   //NOTE: Below is custom addition by Nathan (NSP13737)
   //SETUP: Closed-loop unidirectional mode

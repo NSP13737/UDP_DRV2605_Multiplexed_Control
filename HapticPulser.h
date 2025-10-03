@@ -12,15 +12,15 @@ public:
   HapticPulser(Adafruit_DRV2605 &d);
 
   /**
-   * @brief Sets up the pulser, returns if setup was successful
+   * @brief Initializes a pulser in an off state
    *
    * 
    *
    * @param 
    * 
-   * @return true if auto-calibration completed successfully, false otherwise.
+   * @return true if auto-calibration completed successfully (or is doAutoCal=False), false otherwise.
    */
-  bool begin(float intensityPct_, unsigned long onMs_, unsigned long offMs_, bool doAutoCal = false, float ratedVoltage = 1.0f, float odClamp = 1.5f);
+  bool begin(bool doAutoCal = false, float ratedVoltage = 1.0f, float odClamp = 1.5f);
   void start();
   void stop();
   void update();
