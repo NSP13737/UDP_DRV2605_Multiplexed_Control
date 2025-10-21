@@ -28,29 +28,46 @@ bool setupBelt() {
         if (! pulser[i]->begin(false, 3.8f, 4.0f)) {
           Serial.println("Could not begin pulser #" + i);
           return false;
-        } 
+        }
         pulser[i]->start();
     }
     delay(50);
     return true;
 }
 
-void updateBelt(std::array<float,8> received_distances, int participant_condition) {
+void updateBelt(std::array<float,8> receivedDistances, int participantCondition, float minActivationDist, float maxActivationDist) {
     
-    for (int i = 0; i < NUM_DRIVERS; i++) {
+  for (int i = 0; i < NUM_DRIVERS; i++) {
     multiplexSelect(i);
-    switch (participant_condition) {
-      case 1: //change intensity
-        modulateIntensity(received_distances[i], pulser[i]);
-      case 2: //tbd
-        continue;
+    float activationPercentage = rawDistToActivationPercentage(receivedDistances[i], minActivationDist, maxActivationDist);
+    modulateIntensity(activationPercentage, pulser[i]);
+    switch (participantCondition) {
+      case 1: //change duty cycle
+        modulatePulseDutyCycle(activationPercentage, pulser[i]);
+        break;
+      case 2: //change total pulse time
+        modulatePulseFrequency(activationPercentage, pulser[i]);
+        break;
     }
-    
+
     pulser[i]->update();
-    }
+  }
 }
 
+float rawDistToActivationPercentage(float distance, float minActivationDist, float maxActivationDist) {
+  return ((distance-maxActivationDist)/(minActivationDist-maxActivationDist))    *    ((distance-maxActivationDist)/(minActivationDist-maxActivationDist)); 
+}
 
-void modulateIntensity(float distance, HapticPulser *pulser) {
-  pulser->setIntensity(distance);
+void modulateIntensity(float activationPercentage, HapticPulser *pulser) {
+  pulser->setIntensity(activationPercentage);
+}
+
+void modulatePulseDutyCycle(float activationPercentage, HapticPulser *pulser) {
+  activationPercentage++;
+}
+
+void modulatePulseFrequency(float activationPercentage, HapticPulser *pulser) {
+   
+   //Pass in same value for on and off ms time since we are assuming DC is 50%
+   pulser->setOnOff(((activationPercentage*(MAX_TOTAL_PULSE_MS-MIN_TOTAL_PULSE_MS)) + MIN_TOTAL_PULSE_MS)/2, ((activationPercentage*(MAX_TOTAL_PULSE_MS-MIN_TOTAL_PULSE_MS)) + MIN_TOTAL_PULSE_MS)/2);
 }

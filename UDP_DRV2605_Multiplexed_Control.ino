@@ -3,14 +3,15 @@
 #include "belt_utils.h"
 #include "udp_utils.h"
 
-#define INTENSITY_CONDITION 1
+#define DUTY_CYCLE_CONDITION 1
+#define FREQUENCY_CONDITION 2
 
 
 const char *ssid = "ESP32_AP";
 const char *password = "12345678";
 const int localUdpPort = 4210;
 
-std::array<float,8> received_distances = {0}; // arr for distance floats
+std::array<float,8> received_distances = {1.0f}; // arr for distance floats
 
 float prev_val = 0; // this is for testing in loop()
 
@@ -31,7 +32,7 @@ void setup() {
 
 void loop() {
   
-  received_distances = getDistanceFloats(received_distances);
+  //received_distances = getDistanceFloats(received_distances);
 
   //Below if statement for testing getDistanceFloats
   if (received_distances[0] != prev_val) {
@@ -40,8 +41,9 @@ void loop() {
       Serial.flush();
       prev_val = received_distances[0];
   }
+    
 
-  updateBelt(received_distances, INTENSITY_CONDITION);
+  updateBelt(received_distances, FREQUENCY_CONDITION, 0.1f, 10.0f);
   
   
 }
