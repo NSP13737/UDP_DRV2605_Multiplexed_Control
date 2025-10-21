@@ -5,11 +5,11 @@
 // Assumes signed RTP input (128-255)
 uint8_t pctToRtp(float percent) {
   if (percent <= 0.0f) return 128;
-  if (percent >= 100.0f) return 255;
-  return (uint8_t)(round((percent / 100.0f) * 128.0f)+128);
+  if (percent >= 1.0f) return 255;
+  return (uint8_t)(round(percent * 128.0f)+128);
 }
 
-// Assumes unsigned RTP input (0-255)
+// Assumes unsigned RTP input (0-255) NOTE THIS WOULD NEED TO BE CHANGED TO USE 0-1 RANGE INSTEAD OF 0-100 RANGE
 // uint8_t pctToRtp(float percent) {
 //   if (percent <= 0.0f) return 0;
 //   if (percent >= 100.0f) return 255;
@@ -19,7 +19,7 @@ uint8_t pctToRtp(float percent) {
 HapticPulser::HapticPulser(Adafruit_DRV2605 &d) : drv(d), state(IDLE) {}
 
 bool HapticPulser::begin(bool doAutoCal, float ratedVoltage, float odClamp) {
-  intensityPct = 0.0f;
+  intensityPct = 50.0f;
   onMs = 500;
   offMs = 500;
   drv.setMode(DRV2605_MODE_REALTIME);
@@ -51,18 +51,21 @@ void HapticPulser::stop() {
 }
 
 void HapticPulser::update() {
-  unsigned long now = millis();
+
+  unsigned long lastUpdateTime = millis();
+
   if (state == IDLE) return;
-  if (now < nextToggle) return;
+  if (lastUpdateTime < nextToggle) return;
 
   if (state == ON) {
     drv.setRealtimeValue(128); // neutral
     state = OFF;
-    nextToggle = now + offMs;
+    nextToggle = lastUpdateTime + offMs;
+    
   } else if (state == OFF) {
     drv.setRealtimeValue(pctToRtp(intensityPct));
     state = ON;
-    nextToggle = now + onMs;
+    nextToggle = lastUpdateTime + onMs;
   }
 }
 
@@ -83,10 +86,10 @@ void HapticPulser::setIntensity(float pct) {
 void HapticPulser::setOnOff(unsigned long onMs_, unsigned long offMs_) {
   onMs = onMs_;
   offMs = offMs_;
-  if (state == ON) {
-    nextToggle = millis() + onMs;
-  } else if (state == OFF) {
-    nextToggle = millis() + offMs;
-  }
+  // if (state == ON) {
+  //   nextToggle = lastUpdateTime + onMs;
+  // } else if (state == OFF) {
+  //   nextToggle = lastUpdateTime + offMs;
+  // }
 }
 
