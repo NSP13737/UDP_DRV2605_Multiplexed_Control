@@ -14,8 +14,6 @@ public:
   /**
    * @brief Initializes a pulser in an off state
    *
-   * 
-   *
    * @param 
    * 
    * @return true if auto-calibration completed successfully (or is doAutoCal=False), false otherwise.
@@ -35,6 +33,7 @@ private:
   float intensityPct;
   unsigned long onMs, offMs;
   unsigned long nextToggle;
+  unsigned long lastStateChange;
 
   /**
    * @brief Uses user set values from motor datasheet to get correct register value for programming the overdrive clamp register.

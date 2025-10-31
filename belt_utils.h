@@ -3,13 +3,9 @@
 
 #include <Arduino.h>
 #include "HapticPulser.h"
+#include "study_utils.h"
 
-#define NUM_DRIVERS 1
 #define MULTIPLEX_ADDR 0x70
-
-//min and max pulse times for pulse frequency modulation
-#define MIN_TOTAL_PULSE_MS 0
-#define MAX_TOTAL_PULSE_MS 2000
 
 /**
     * @brief Used to select different I2C devices on multiplexer
@@ -40,7 +36,7 @@ void modulateIntensity(float activationPercentage, HapticPulser *pulser);
 void modulatePulseFrequency(float activationPercentage, HapticPulser *pulser);
 
 /**
-   * @brief Assumes 50% duty cycle is wanted 
+   * @brief 
    * @return none
 */
 void modulatePulseDutyCycle(float activationPercentage, HapticPulser *pulser);

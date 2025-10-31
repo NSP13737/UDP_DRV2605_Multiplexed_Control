@@ -19,7 +19,7 @@ uint8_t pctToRtp(float percent) {
 HapticPulser::HapticPulser(Adafruit_DRV2605 &d) : drv(d), state(IDLE) {}
 
 bool HapticPulser::begin(bool doAutoCal, float ratedVoltage, float odClamp) {
-  intensityPct = 50.0f;
+  intensityPct = 0.0f;
   onMs = 500;
   offMs = 500;
   drv.setMode(DRV2605_MODE_REALTIME);
@@ -52,20 +52,23 @@ void HapticPulser::stop() {
 
 void HapticPulser::update() {
 
-  unsigned long lastUpdateTime = millis();
+  
 
   if (state == IDLE) return;
-  if (lastUpdateTime < nextToggle) return;
+  if (millis() < nextToggle) return;
 
   if (state == ON) {
     drv.setRealtimeValue(128); // neutral
     state = OFF;
-    nextToggle = lastUpdateTime + offMs;
+    lastStateChange = millis();
+    nextToggle = lastStateChange + offMs;
     
   } else if (state == OFF) {
     drv.setRealtimeValue(pctToRtp(intensityPct));
     state = ON;
-    nextToggle = lastUpdateTime + onMs;
+    lastStateChange = millis();
+    nextToggle = lastStateChange + onMs;
+    
   }
 }
 
@@ -86,10 +89,30 @@ void HapticPulser::setIntensity(float pct) {
 void HapticPulser::setOnOff(unsigned long onMs_, unsigned long offMs_) {
   onMs = onMs_;
   offMs = offMs_;
-  // if (state == ON) {
-  //   nextToggle = lastUpdateTime + onMs;
-  // } else if (state == OFF) {
-  //   nextToggle = lastUpdateTime + offMs;
-  // }
+
+  if (state != IDLE) {
+    unsigned long currentTime = millis();
+    unsigned long elapsedTime = currentTime - lastStateChange;
+
+    if (state == ON) {
+      //If elapsedTime is longer than new on time, change state immediately
+      if (elapsedTime >= onMs) {
+        nextToggle = currentTime;
+      } else {
+        nextToggle = lastStateChange + onMs;
+      }
+      
+    } else if (state == OFF) {
+      //If elapsedTime is longer than new off time, change state immediately
+      if (elapsedTime >= offMs) {
+        nextToggle = currentTime;
+      } else {
+        nextToggle = lastStateChange + offMs;
+      }
+    }
+
+  }
+  
+  
 }
 

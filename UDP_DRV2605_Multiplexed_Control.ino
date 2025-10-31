@@ -2,10 +2,7 @@
 #include "Adafruit_DRV2605.h"
 #include "belt_utils.h"
 #include "udp_utils.h"
-
-#define DUTY_CYCLE_CONDITION 1
-#define FREQUENCY_CONDITION 2
-
+#include "study_utils.h"
 
 const char *ssid = "ESP32_AP";
 const char *password = "12345678";
@@ -32,7 +29,7 @@ void setup() {
 
 void loop() {
   
-  //received_distances = getDistanceFloats(received_distances);
+  received_distances = getDistanceFloats(received_distances);
 
   //Below if statement for testing getDistanceFloats
   if (received_distances[0] != prev_val) {
@@ -43,7 +40,7 @@ void loop() {
   }
     
 
-  updateBelt(received_distances, FREQUENCY_CONDITION, 0.1f, 10.0f);
+  updateBelt(received_distances, FREQUENCY_CONDITION, MIN_ACTIVATION_DIST, MAX_ACTIVATION_DIST);
   
   
 }

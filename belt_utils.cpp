@@ -42,11 +42,11 @@ void updateBelt(std::array<float,8> receivedDistances, int participantCondition,
     float activationPercentage = rawDistToActivationPercentage(receivedDistances[i], minActivationDist, maxActivationDist);
     modulateIntensity(activationPercentage, pulser[i]);
     switch (participantCondition) {
-      case 1: //change duty cycle
-        modulatePulseDutyCycle(activationPercentage, pulser[i]);
-        break;
-      case 2: //change total pulse time
+      case 1: //change frequency
         modulatePulseFrequency(activationPercentage, pulser[i]);
+        break;
+      case 2: //change duty cycle 
+        modulatePulseDutyCycle(activationPercentage, pulser[i]);
         break;
     }
 
@@ -55,7 +55,14 @@ void updateBelt(std::array<float,8> receivedDistances, int participantCondition,
 }
 
 float rawDistToActivationPercentage(float distance, float minActivationDist, float maxActivationDist) {
+  if (distance >= maxActivationDist) {
+    return 0;
+  }
+  if (distance <= minActivationDist) {
+    return 1;
+  }
   return ((distance-maxActivationDist)/(minActivationDist-maxActivationDist))    *    ((distance-maxActivationDist)/(minActivationDist-maxActivationDist)); 
+
 }
 
 void modulateIntensity(float activationPercentage, HapticPulser *pulser) {
@@ -69,5 +76,5 @@ void modulatePulseDutyCycle(float activationPercentage, HapticPulser *pulser) {
 void modulatePulseFrequency(float activationPercentage, HapticPulser *pulser) {
    
    //Pass in same value for on and off ms time since we are assuming DC is 50%
-   pulser->setOnOff(((activationPercentage*(MAX_TOTAL_PULSE_MS-MIN_TOTAL_PULSE_MS)) + MIN_TOTAL_PULSE_MS)/2, ((activationPercentage*(MAX_TOTAL_PULSE_MS-MIN_TOTAL_PULSE_MS)) + MIN_TOTAL_PULSE_MS)/2);
+   pulser->setOnOff((((1-activationPercentage)*(MAX_TOTAL_PULSE_MS-MIN_TOTAL_PULSE_MS)) + MIN_TOTAL_PULSE_MS)*FIXED_DUTY_CYCLE, (((1-activationPercentage)*(MAX_TOTAL_PULSE_MS-MIN_TOTAL_PULSE_MS)) + MIN_TOTAL_PULSE_MS)*(1-FIXED_DUTY_CYCLE));
 }
