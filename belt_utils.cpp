@@ -22,7 +22,7 @@ bool setupBelt() {
           Serial.println("Could not find DRV2605 #" + i);
           return false;
         }
-        delay(50);
+        delay(6);
         // Create and start each pulser
         pulser[i] = new HapticPulser(*drv[i]);
         if (! pulser[i]->begin(false, 3.8f, 4.0f)) {
