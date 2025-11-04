@@ -8,16 +8,12 @@
 
 
 //belt_utils.h
-#define NUM_DRIVERS 1
-//min and max pulse times for pulse frequency modulation
-#define MIN_TOTAL_PULSE_MS 20 //DO NOT SET TO BELOW ~10) 
-#define MAX_TOTAL_PULSE_MS 2000
+#define NUM_DRIVERS 8
+//freq modulation
+#define MIN_FREQ_HZ 0.25
+#define MAX_FREQ_HZ 25 //DO NOT SET ABOVE 50!
 #define FIXED_DUTY_CYCLE 0.5
+//duty cycle modulation
+#define FIXED_PERIOD_MS 500 // 1000ms/2Hz
 
 #endif
-
-
-
-
-
-

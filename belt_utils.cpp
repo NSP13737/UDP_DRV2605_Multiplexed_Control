@@ -70,11 +70,13 @@ void modulateIntensity(float activationPercentage, HapticPulser *pulser) {
 }
 
 void modulatePulseDutyCycle(float activationPercentage, HapticPulser *pulser) {
-  activationPercentage++;
+
+  pulser->setOnOff(FIXED_PERIOD_MS * activationPercentage, (FIXED_PERIOD_MS - (FIXED_PERIOD_MS * activationPercentage)));
 }
 
 void modulatePulseFrequency(float activationPercentage, HapticPulser *pulser) {
-   
-   //Pass in same value for on and off ms time since we are assuming DC is 50%
-   pulser->setOnOff((((1-activationPercentage)*(MAX_TOTAL_PULSE_MS-MIN_TOTAL_PULSE_MS)) + MIN_TOTAL_PULSE_MS)*FIXED_DUTY_CYCLE, (((1-activationPercentage)*(MAX_TOTAL_PULSE_MS-MIN_TOTAL_PULSE_MS)) + MIN_TOTAL_PULSE_MS)*(1-FIXED_DUTY_CYCLE));
+  float freqHz = ((activationPercentage)*(MAX_FREQ_HZ - MIN_FREQ_HZ)) + MIN_FREQ_HZ;
+  float periodMs = 1000.0 / freqHz;
+
+  pulser->setOnOff(periodMs * FIXED_DUTY_CYCLE, periodMs * (1 - FIXED_DUTY_CYCLE));
 }
