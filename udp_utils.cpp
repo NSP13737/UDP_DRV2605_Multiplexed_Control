@@ -3,7 +3,7 @@
 
 namespace {
     WiFiUDP udp;
-    uint8_t udp_recv_buffer[32]; //32 bytes to hold 8 float values
+    uint8_t udp_recv_buffer[60]; //32 bytes to hold 8 distance floats + 7 study params
 }
 
 void setupWireless(const char *ssid, const char *password, const int UdpPort) {
@@ -20,16 +20,16 @@ void setupWireless(const char *ssid, const char *password, const int UdpPort) {
    
 }
 
-std::array<float,8> getDistanceFloats(std::array<float,8> received_distances) {
+std::array<float,15> getData(std::array<float,15> current_data) {
     int packetSize = udp.parsePacket();
     if (packetSize) {
         int len = udp.read(udp_recv_buffer, sizeof(udp_recv_buffer));
-        if (len == static_cast<int>(sizeof(received_distances))) { // make sure the information we received is the same size as what we are expecting
-            memcpy(received_distances.data(), udp_recv_buffer, sizeof(received_distances));
+        if (len == static_cast<int>(sizeof(current_data))) { // make sure the information we received is the same size as what we are expecting
+            memcpy(current_data.data(), udp_recv_buffer, sizeof(current_data));
             
         
         }
         
     }
-    return received_distances;
+    return current_data;
 }

@@ -6,6 +6,11 @@
 
 void setupWireless(const char *ssid, const char *password, const int UdpPort);
 
-std::array<float,8> getDistanceFloats(std::array<float,8> received_distances);
+/**
+ * @brief Using quatratic function: Takes the users raw distance from a wall and converts it to a percentage to be used by modulation helpers
+ * @param current_data Contains 15 floats. The first 8 represent raw tactors distances, the next 7 represent study parameters.
+ * @return If there is a new packet to recieve, returns floats for this, otherwise, returns values originally passed in.
+ */
+std::array<float,15> getData(std::array<float,15> current_data);
 
 #endif

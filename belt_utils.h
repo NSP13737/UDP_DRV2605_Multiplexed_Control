@@ -3,8 +3,8 @@
 
 #include <Arduino.h>
 #include "HapticPulser.h"
-#include "study_utils.h"
 
+#define NUM_DRIVERS 1
 #define MULTIPLEX_ADDR 0x70
 
 /**
@@ -21,7 +21,7 @@ bool setupBelt();
    * @param participant_condition 1 = duty cycle modulation; 2 = total pulse time modulation
    * @return none
 */
-void updateBelt(std::array<float,8> receivedDistances, int participantCondition, float minActivationDist, float maxActivationDist);
+void updateBelt(std::array<float,8> distances, std::array<float,7> study_params);
 
 /**
  * @brief Using quatratic function: Takes the users raw distance from a wall and converts it to a percentage to be used by modulation helpers
@@ -29,17 +29,32 @@ void updateBelt(std::array<float,8> receivedDistances, int participantCondition,
  * @param maxActivationDist The distance the tactor should be "weakest" at
  * @param minActivationDist The distance where the tactor should be "strongest"
  */
-float rawDistToActivationPercentage(float distance, float minActivationDist, float maxActivationDist);
-
-void modulateIntensity(float activationPercentage, HapticPulser *pulser);
-
-void modulatePulseFrequency(float activationPercentage, HapticPulser *pulser);
+float rawDistToActivationPercentage(float distance, float min_activation_dist, float max_activation_dist);
 
 /**
-   * @brief 
-   * @return none
-*/
-void modulatePulseDutyCycle(float activationPercentage, HapticPulser *pulser);
+ * @brief Directly modulates intensity of pulser from 0-100
+ * @param activation_percentage
+ * @param pulser pulser to modulate
+ */
+void modulateIntensity(float activation_percentage, HapticPulser *pulser);
+
+/**
+ * @brief Modulates how quickly the pulser pulses
+ * @param activation_percentage
+ * @param pulser pulser to modulate
+ * @param min_freq_hz the "slowest" the pulses should be. Occurs when user is >= max_activation_dist from wall
+ * @param min_freq_hz the "fastest" the pulses should be. Occurs when user is <= min_activation_dist from wall
+ * @param fixed_duty_cycle Controls the duty cycle of each pulse, which remains fixed across freqs
+ */
+void modulatePulseFrequency(float activation_percentage, HapticPulser *pulser, float min_freq_hz, float max_freq_hz, float fixed_duty_cycle);
+
+/**
+ * @brief Modulates the % duration spent vibrating during one pulse
+ * @param activation_percentage
+ * @param pulser pulser to modulate
+ * @param fixed_freq_hz the frequency of pulses. Remains constant regardless of duty cycle
+ */
+void modulatePulseDutyCycle(float activation_percentage, HapticPulser *pulser, float fixed_freq_hz);
 
 
 #endif

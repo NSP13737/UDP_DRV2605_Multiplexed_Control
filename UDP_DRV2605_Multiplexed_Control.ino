@@ -2,13 +2,14 @@
 #include "Adafruit_DRV2605.h"
 #include "belt_utils.h"
 #include "udp_utils.h"
-#include "study_utils.h"
 
 const char *ssid = "ESP32_AP";
 const char *password = "12345678";
 const int localUdpPort = 4210;
 
-std::array<float,8> received_distances = {1.0f}; // arr for distance floats
+std::array<float,15> received_data = {};
+std::array<float,8> received_distances = {}; // arr for distance floats
+std::array<float,7> received_study_params = {};
 
 float prev_val = 0; // this is for testing in loop()
 
@@ -29,18 +30,21 @@ void setup() {
 
 void loop() {
   
-  received_distances = getDistanceFloats(received_distances);
+  received_data = getData(received_data);
+  std::copy(received_data.begin(), received_data.begin()+received_distances.size(), received_distances.begin()); //copy portion from start to length of distance array
+  std::copy(received_data.begin()+received_distances.size(), received_data.begin()+received_distances.size()+received_study_params.size(), received_study_params.begin()); //copy from length of dist to length of dist arr + length of study_params arr
 
-  //Below if statement for testing getDistanceFloats
-  if (received_distances[0] != prev_val) {
+
+  //Below block for testing 
+  if (received_data[0] != prev_val) {
       Serial.print("Received: ");
-      Serial.println(received_distances[0]);
+      Serial.println(received_data[0]);
       Serial.flush();
-      prev_val = received_distances[0];
+      prev_val = received_data[0];
   }
     
 
-  updateBelt(received_distances, FREQUENCY_CONDITION, MIN_ACTIVATION_DIST, MAX_ACTIVATION_DIST);
+  updateBelt(received_distances, received_study_params);
   
   
 }

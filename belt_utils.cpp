@@ -1,5 +1,8 @@
 #include "belt_utils.h"
 
+
+
+//Global arrays for pointers to motor driver and pulser objects
 namespace {
   Adafruit_DRV2605* drv[NUM_DRIVERS];
   HapticPulser* pulser[NUM_DRIVERS];
@@ -35,18 +38,32 @@ bool setupBelt() {
     return true;
 }
 
-void updateBelt(std::array<float,8> receivedDistances, int participantCondition, float minActivationDist, float maxActivationDist) {
-    
+//Struct for use in updateBelt to make passing params clearer
+struct StudyParamsStruct {
+  int condition_selection;
+  float min_activation_dist;
+  float max_activation_dist;
+  float min_freq_hz;
+  float max_freq_hz;
+  float fixed_duty_cycle;
+  float fixed_freq_hz;
+};
+
+void updateBelt(std::array<float,8> distances, std::array<float,7> study_params) {
+  StudyParamsStruct study_params_struct(static_cast<int>(study_params[0]), study_params[1], study_params[2], study_params[3], study_params[4], study_params[5], study_params[6]);
+
   for (int i = 0; i < NUM_DRIVERS; i++) {
     multiplexSelect(i);
-    float activationPercentage = rawDistToActivationPercentage(receivedDistances[i], minActivationDist, maxActivationDist);
-    modulateIntensity(activationPercentage, pulser[i]);
-    switch (participantCondition) {
+    float activation_percentage = rawDistToActivationPercentage(distances[i], study_params_struct.min_activation_dist, study_params_struct.max_activation_dist);
+    modulateIntensity(activation_percentage, pulser[i]);
+    
+    // Switch based on condition chosen
+    switch (study_params_struct.condition_selection) {
       case 1: //change frequency
-        modulatePulseFrequency(activationPercentage, pulser[i]);
+        modulatePulseFrequency(activation_percentage, pulser[i], study_params_struct.min_freq_hz, study_params_struct.max_freq_hz, study_params_struct.fixed_duty_cycle);
         break;
       case 2: //change duty cycle 
-        modulatePulseDutyCycle(activationPercentage, pulser[i]);
+        modulatePulseDutyCycle(activation_percentage, pulser[i], study_params_struct.fixed_freq_hz);
         break;
     }
 
@@ -54,29 +71,30 @@ void updateBelt(std::array<float,8> receivedDistances, int participantCondition,
   }
 }
 
-float rawDistToActivationPercentage(float distance, float minActivationDist, float maxActivationDist) {
-  if (distance >= maxActivationDist) {
+float rawDistToActivationPercentage(float distance, float min_activation_dist, float max_activation_dist) {
+  if (distance >= max_activation_dist) {
     return 0;
   }
-  if (distance <= minActivationDist) {
+  if (distance <= min_activation_dist) {
     return 1;
   }
-  return ((distance-maxActivationDist)/(minActivationDist-maxActivationDist))    *    ((distance-maxActivationDist)/(minActivationDist-maxActivationDist)); 
+  return ((distance-max_activation_dist)/(min_activation_dist-max_activation_dist))    *    ((distance-max_activation_dist)/(min_activation_dist-max_activation_dist)); 
 
 }
 
-void modulateIntensity(float activationPercentage, HapticPulser *pulser) {
-  pulser->setIntensity(activationPercentage);
+void modulateIntensity(float activation_percentage, HapticPulser *pulser) {
+  pulser->setIntensity(activation_percentage);
 }
 
-void modulatePulseDutyCycle(float activationPercentage, HapticPulser *pulser) {
-
-  pulser->setOnOff(FIXED_PERIOD_MS * activationPercentage, (FIXED_PERIOD_MS - (FIXED_PERIOD_MS * activationPercentage)));
-}
-
-void modulatePulseFrequency(float activationPercentage, HapticPulser *pulser) {
-  float freqHz = ((activationPercentage)*(MAX_FREQ_HZ - MIN_FREQ_HZ)) + MIN_FREQ_HZ;
+void modulatePulseFrequency(float activation_percentage, HapticPulser *pulser, float min_freq_hz, float max_freq_hz, float fixed_duty_cycle) {
+  float freqHz = ((activation_percentage)*(max_freq_hz - min_freq_hz)) + min_freq_hz;
   float periodMs = 1000.0 / freqHz;
 
-  pulser->setOnOff(periodMs * FIXED_DUTY_CYCLE, periodMs * (1 - FIXED_DUTY_CYCLE));
+  pulser->setOnOff(periodMs * fixed_duty_cycle, periodMs * (1 - fixed_duty_cycle));
 }
+
+void modulatePulseDutyCycle(float activation_percentage, HapticPulser *pulser, float fixed_freq_hz) {
+  float fixed_period_ms = 1000.0f / fixed_freq_hz;
+  pulser->setOnOff(fixed_period_ms * activation_percentage, (fixed_period_ms - (fixed_period_ms * activation_percentage)));
+}
+
