@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include "HapticPulser.h"
 
-#define NUM_DRIVERS 1
+#define NUM_DRIVERS 8
 #define MULTIPLEX_ADDR 0x70
 
 /**
@@ -21,7 +21,7 @@ bool setupBelt();
    * @param participant_condition 1 = duty cycle modulation; 2 = total pulse time modulation
    * @return none
 */
-void updateBelt(std::array<float,8> distances, std::array<float,7> study_params);
+void updateBelt(std::array<float,8> distances, std::array<float,8> study_params);
 
 /**
  * @brief Using quatratic function: Takes the users raw distance from a wall and converts it to a percentage to be used by modulation helpers
@@ -35,8 +35,9 @@ float rawDistToActivationPercentage(float distance, float min_activation_dist, f
  * @brief Directly modulates intensity of pulser from 0-100
  * @param activation_percentage
  * @param pulser pulser to modulate
+ * @param just_detectable_intensity A percentage which sets the minimum intensity to be the minimum that each user can feel
  */
-void modulateIntensity(float activation_percentage, HapticPulser *pulser);
+void modulateIntensity(float activation_percentage, HapticPulser *pulser, float just_detectable_intensity);
 
 /**
  * @brief Modulates how quickly the pulser pulses

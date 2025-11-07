@@ -47,15 +47,16 @@ struct StudyParamsStruct {
   float max_freq_hz;
   float fixed_duty_cycle;
   float fixed_freq_hz;
+  float just_detectable_intensity;
 };
 
-void updateBelt(std::array<float,8> distances, std::array<float,7> study_params) {
-  StudyParamsStruct study_params_struct(static_cast<int>(study_params[0]), study_params[1], study_params[2], study_params[3], study_params[4], study_params[5], study_params[6]);
+void updateBelt(std::array<float,8> distances, std::array<float,8> study_params) {
+  StudyParamsStruct study_params_struct(static_cast<int>(study_params[0]), study_params[1], study_params[2], study_params[3], study_params[4], study_params[5], study_params[6], study_params[7]);
 
   for (int i = 0; i < NUM_DRIVERS; i++) {
     multiplexSelect(i);
     float activation_percentage = rawDistToActivationPercentage(distances[i], study_params_struct.min_activation_dist, study_params_struct.max_activation_dist);
-    modulateIntensity(activation_percentage, pulser[i]);
+    modulateIntensity(activation_percentage, pulser[i], study_params_struct.just_detectable_intensity);
     
     // Switch based on condition chosen
     switch (study_params_struct.condition_selection) {
@@ -82,8 +83,16 @@ float rawDistToActivationPercentage(float distance, float min_activation_dist, f
 
 }
 
-void modulateIntensity(float activation_percentage, HapticPulser *pulser) {
-  pulser->setIntensity(activation_percentage);
+void modulateIntensity(float activation_percentage, HapticPulser *pulser, float just_detectable_intensity) {
+  //Set to 0 if distance is not in range (without this, when dist is out of range, motor will activate at just_detectable_intensity)
+  if (activation_percentage == 0.0f) {
+    pulser->setIntensity(0.0f);
+  }
+  //Otherwise use normally
+  else {
+    pulser->setIntensity(((activation_percentage-1)*(1-just_detectable_intensity))+1);
+  }
+  
 }
 
 void modulatePulseFrequency(float activation_percentage, HapticPulser *pulser, float min_freq_hz, float max_freq_hz, float fixed_duty_cycle) {

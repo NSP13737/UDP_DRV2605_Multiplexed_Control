@@ -7,9 +7,9 @@ const char *ssid = "ESP32_AP";
 const char *password = "12345678";
 const int localUdpPort = 4210;
 
-std::array<float,15> received_data = {};
+std::array<float,16> received_data = {};
 std::array<float,8> received_distances = {}; // arr for distance floats
-std::array<float,7> received_study_params = {};
+std::array<float,8> received_study_params = {};
 
 float prev_val = 0; // this is for testing in loop()
 
