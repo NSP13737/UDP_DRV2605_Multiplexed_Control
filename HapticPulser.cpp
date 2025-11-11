@@ -16,7 +16,7 @@ uint8_t pctToRtp(float percent) {
 //   return (uint8_t)(round((percent / 100.0f)*255.0f));
 // }
 
-HapticPulser::HapticPulser(Adafruit_DRV2605 &d) : drv(d), state(IDLE) {}
+HapticPulser::HapticPulser(Adafruit_DRV2605 &d, uint8_t id) : drv(d), motorId(id), state(IDLE) {}
 
 bool HapticPulser::begin(bool doAutoCal, float ratedVoltage, float odClamp) {
   intensityPct = 0.0f;

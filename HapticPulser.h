@@ -9,7 +9,7 @@ uint8_t pctToRtp(float percent);
 
 class HapticPulser {
 public:
-  HapticPulser(Adafruit_DRV2605 &d);
+  HapticPulser(Adafruit_DRV2605 &d, uint8_t id);
 
   /**
    * @brief Initializes a pulser in an off state
@@ -29,6 +29,7 @@ public:
 
 private:
   Adafruit_DRV2605 &drv;
+  uint8_t motorId;
   enum { IDLE, ON, OFF } state;
   float intensityPct;
   unsigned long onMs, offMs;

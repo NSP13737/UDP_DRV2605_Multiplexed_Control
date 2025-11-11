@@ -27,8 +27,8 @@ bool setupBelt() {
         }
         delay(6);
         // Create and start each pulser
-        pulser[i] = new HapticPulser(*drv[i]);
-        if (! pulser[i]->begin(false, 3.8f, 4.0f)) {
+        pulser[i] = new HapticPulser(*drv[i], i);
+        if (! pulser[i]->begin(true, 3.8f, 5.0f)) {
           Serial.println("Could not begin pulser #" + i);
           return false;
         }
@@ -52,7 +52,7 @@ struct StudyParamsStruct {
 
 void updateBelt(std::array<float,8> distances, std::array<float,8> study_params) {
   StudyParamsStruct study_params_struct(static_cast<int>(study_params[0]), study_params[1], study_params[2], study_params[3], study_params[4], study_params[5], study_params[6], study_params[7]);
-
+  
   for (int i = 0; i < NUM_DRIVERS; i++) {
     multiplexSelect(i);
     float activation_percentage = rawDistToActivationPercentage(distances[i], study_params_struct.min_activation_dist, study_params_struct.max_activation_dist);
@@ -67,7 +67,6 @@ void updateBelt(std::array<float,8> distances, std::array<float,8> study_params)
         modulatePulseDutyCycle(activation_percentage, pulser[i], study_params_struct.fixed_freq_hz);
         break;
     }
-
     pulser[i]->update();
   }
 }
