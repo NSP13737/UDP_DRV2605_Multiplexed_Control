@@ -6,6 +6,14 @@
 #if DEBUG == 1
 #define debug(x) Serial.print(x)
 #define debugln(x) Serial.println(x)
+#define debugflush(x) Serial.flush(x)
+
+#else
+//Set debug statements to nothing
+#define debug(x)
+#define debugln(x)
+#define debugflush(x)
+
 #endif
 
 

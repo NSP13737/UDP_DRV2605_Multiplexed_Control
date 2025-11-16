@@ -1,5 +1,6 @@
 #include "HapticPulser.h"
 #include <cmath> // For std::round()
+#include "debug.h"
 
 uint8_t HapticPulser::get_erm_od_clamp_reg(float v_erm_clamp_volts) {
 
@@ -96,7 +97,10 @@ bool HapticPulser::runAutoCal(float ratedVoltage, float odClamp) {
         // Check to make sure mode has been set correctly 
     uint8_t mode_readback = this->drv.readRegister8(DRV2605_REG_MODE) & 0x07;
     if (mode_readback != previousMode) {
-        Serial.printf("Warning: failed to restore mode: expected=%u read=%u\n", previousMode, mode_readback);
+        Serial.print("Warning: failed to restore mode: expected=");
+        debug(previousMode); 
+        debug(" read=");
+        debugln(mode_readback);
     }
 
     // 7) Check diag result
@@ -107,7 +111,10 @@ bool HapticPulser::runAutoCal(float ratedVoltage, float odClamp) {
     // 8) Optionally read compensation values
     uint8_t comp = this->drv.readRegister8(DRV2605_REG_AUTOCALCOMP); // 0x18
     uint8_t bemf = this->drv.readRegister8(DRV2605_REG_AUTOCALEMP);  // 0x19
-    Serial.printf("AutoCal OK: comp=%u bemf=%u\n", comp, bemf);
+    debug("AutoCal OK: comp=");
+    debug(comp);
+    debug(" bemf=");
+    debugln(bemf);
 
     return true;
 }

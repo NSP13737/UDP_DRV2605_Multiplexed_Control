@@ -1,5 +1,6 @@
 #include "HapticPulser.h"
 #include <cmath> // For std::round()
+#include "debug.h"
 
 
 // Assumes signed RTP input (128-255)
@@ -67,6 +68,18 @@ void HapticPulser::update() {
     drv.setRealtimeValue(pctToRtp(intensityPct));
     state = ON;
     lastStateChange = millis();
+    
+    // TEST CODE
+    // ----------------------------
+    debug("Motor ");
+    debug(motorId);
+    debug(" ON @: ");
+    debugln(lastStateChange);
+    if (motorId == 0) {
+      debugln();
+    }
+    // -----------------------------
+
     nextToggle = lastStateChange + onMs;
     
   }

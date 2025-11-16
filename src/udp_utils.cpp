@@ -1,4 +1,5 @@
 #include "udp_utils.h"
+#include "debug.h"
 
 
 namespace {
@@ -10,13 +11,13 @@ void setupWireless(const char *ssid, const char *password, const int UdpPort) {
   
     WiFi.softAP(ssid, password);
     IPAddress ip = WiFi.softAPIP();
-    Serial.print("ESP32 AP IP: ");
-    Serial.println(ip);
+    debug("ESP32 AP IP: ");
+    debugln(ip);
 
     // Start UDP server
     udp.begin(UdpPort);
-    // Serial.print("Listening on UDP port ");
-    // Serial.println(localUdpPort);    
+    // debug("Listening on UDP port ");
+    // debugln(localUdpPort);    
    
 }
 

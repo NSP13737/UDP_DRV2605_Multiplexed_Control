@@ -1,4 +1,5 @@
 #include "belt_utils.h"
+#include "debug.h"
 
 
 
@@ -22,14 +23,14 @@ bool setupBelt() {
         drv[i] = new Adafruit_DRV2605();
         // Start each drv
         if (!drv[i]->begin()) {
-          Serial.println("Could not find DRV2605 #" + i);
+          debugln("Could not find DRV2605 #" + i);
           return false;
         }
         delay(6);
         // Create and start each pulser
         pulser[i] = new HapticPulser(*drv[i], i);
         if (! pulser[i]->begin(true, 3.8f, 5.0f)) {
-          Serial.println("Could not begin pulser #" + i);
+          debugln("Could not begin pulser #" + i);
           return false;
         }
         pulser[i]->start();
@@ -39,7 +40,7 @@ bool setupBelt() {
 }
 
 //Struct for use in updateBelt to make passing params clearer
-struct StudyParamsStruct {
+struct {
   int condition_selection;
   float min_activation_dist;
   float max_activation_dist;
@@ -48,10 +49,18 @@ struct StudyParamsStruct {
   float fixed_duty_cycle;
   float fixed_freq_hz;
   float just_detectable_intensity;
-};
+} study_params_struct ;
 
 void updateBelt(std::array<float,8> distances, std::array<float,8> study_params) {
-  StudyParamsStruct study_params_struct(static_cast<int>(study_params[0]), study_params[1], study_params[2], study_params[3], study_params[4], study_params[5], study_params[6], study_params[7]);
+  //Assign params to easy to understand stuct
+  study_params_struct.condition_selection = static_cast<int>(study_params[0]);
+  study_params_struct.min_activation_dist = study_params[1]; 
+  study_params_struct.max_activation_dist = study_params[2];
+  study_params_struct.min_freq_hz = study_params[3];
+  study_params_struct.max_freq_hz = study_params[4];
+  study_params_struct.fixed_duty_cycle = study_params[5];
+  study_params_struct.fixed_freq_hz = study_params[6];
+  study_params_struct.just_detectable_intensity = study_params[7];
   
   for (int i = 0; i < NUM_DRIVERS; i++) {
     multiplexSelect(i);

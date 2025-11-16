@@ -2,6 +2,7 @@
 #include "Adafruit_DRV2605.h"
 #include "belt_utils.h"
 #include "udp_utils.h"
+#include "debug.h"
 
 const char *ssid = "ESP32_AP";
 const char *password = "12345678";
@@ -17,10 +18,10 @@ void setup() {
   Serial.begin(9600);
   setupWireless(ssid, password, localUdpPort);
   Wire.begin();
-  Serial.println("Program Start");
+  debugln("Program Start");
   
   if (!setupBelt()) {
-    Serial.println("Belt setup failed");
+    debugln("Belt setup failed");
     while(1) {
       delay(100);
     }
@@ -37,9 +38,9 @@ void loop() {
 
   //Below block for testing 
   if (received_data[0] != prev_val) {
-      Serial.print("Received: ");
-      Serial.println(received_data[0]);
-      Serial.flush();
+      debug("Received: ");
+      debugln(received_data[0]);
+      debugflush();
       prev_val = received_data[0];
   }
     
