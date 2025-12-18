@@ -23,14 +23,16 @@ bool setupBelt() {
         drv[i] = new Adafruit_DRV2605();
         // Start each drv
         if (!drv[i]->begin()) {
-          debugln("Could not find DRV2605 #" + i);
+          debug("Could not find DRV2605 #");
+          debugln(i);
           return false;
         }
-        delay(6);
+        delay(100);
         // Create and start each pulser
         pulser[i] = new HapticPulser(*drv[i], i);
         if (! pulser[i]->begin(true, 3.8f, 5.0f)) {
-          debugln("Could not begin pulser #" + i);
+          debug("Could not begin pulser #");
+          debugln(i);
           return false;
         }
         pulser[i]->start();
@@ -41,7 +43,7 @@ bool setupBelt() {
 
 //Struct for use in updateBelt to make passing params clearer
 struct {
-  int condition_selection;
+  uint8_t condition_selection;
   float min_activation_dist;
   float max_activation_dist;
   float min_freq_hz;
@@ -52,8 +54,9 @@ struct {
 } study_params_struct ;
 
 void updateBelt(std::array<float,8> distances, std::array<float,8> study_params) {
+  static uint8_t lastState = 0; //set to 0 to indicate it hasn't yet been defined by unity
   //Assign params to easy to understand stuct
-  study_params_struct.condition_selection = static_cast<int>(study_params[0]);
+  study_params_struct.condition_selection = static_cast<uint8_t>(study_params[0]);
   study_params_struct.min_activation_dist = study_params[1]; 
   study_params_struct.max_activation_dist = study_params[2];
   study_params_struct.min_freq_hz = study_params[3];
@@ -61,7 +64,24 @@ void updateBelt(std::array<float,8> distances, std::array<float,8> study_params)
   study_params_struct.fixed_duty_cycle = study_params[5];
   study_params_struct.fixed_freq_hz = study_params[6];
   study_params_struct.just_detectable_intensity = study_params[7];
+
   
+  // If last state hasn't been defined (at start of program), set it to the current condition
+  if (lastState == 0) {
+    debugln(lastState);
+    debugln(study_params_struct.condition_selection);
+    lastState = study_params_struct.condition_selection;
+  }
+  // If the condition state changes either way, sync the belt
+  if ((lastState == 2) && (study_params_struct.condition_selection == 1)) {
+    lastState = 1;
+    syncBelt();
+  }
+  else if ((lastState == 1) && (study_params_struct.condition_selection == 2)) {
+    lastState = 2;
+    syncBelt();
+  }
+
   for (int i = 0; i < NUM_DRIVERS; i++) {
     multiplexSelect(i);
     float activation_percentage = rawDistToActivationPercentage(distances[i], study_params_struct.min_activation_dist, study_params_struct.max_activation_dist);
@@ -113,5 +133,16 @@ void modulatePulseFrequency(float activation_percentage, HapticPulser *pulser, f
 void modulatePulseDutyCycle(float activation_percentage, HapticPulser *pulser, float fixed_freq_hz) {
   float fixed_period_ms = 1000.0f / fixed_freq_hz;
   pulser->setOnOff(fixed_period_ms * activation_percentage, (fixed_period_ms - (fixed_period_ms * activation_percentage)));
+}
+
+void syncBelt(void) {
+  unsigned long fixed_time = millis();
+  for (int i = 0; i < NUM_DRIVERS; i++) {
+    debug("Next on time for ");
+    debug(i);
+    debug(": ");
+    multiplexSelect(i);
+    pulser[i]->setNextOnTime(fixed_time+10000);
+  }
 }
 

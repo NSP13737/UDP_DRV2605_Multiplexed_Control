@@ -7,7 +7,7 @@ namespace {
     uint8_t udp_recv_buffer[64]; //32 bytes to hold 8 distance floats + 8 study params
 }
 
-void setupWireless(const char *ssid, const char *password, const int UdpPort) {
+void udpSetupWireless(const char *ssid, const char *password, const int UdpPort) {
   
     WiFi.softAP(ssid, password);
     IPAddress ip = WiFi.softAPIP();

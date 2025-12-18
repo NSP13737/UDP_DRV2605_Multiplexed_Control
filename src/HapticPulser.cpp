@@ -56,9 +56,10 @@ void HapticPulser::update() {
   
 
   if (state == IDLE) return;
+
   if (millis() < nextToggle) return;
 
-  if (state == ON) {
+  else if (state == ON) {
     drv.setRealtimeValue(128); // neutral
     state = OFF;
     lastStateChange = millis();
@@ -71,13 +72,13 @@ void HapticPulser::update() {
     
     // TEST CODE
     // ----------------------------
-    debug("Motor ");
-    debug(motorId);
-    debug(" ON @: ");
-    debugln(lastStateChange);
-    if (motorId == 0) {
-      debugln();
-    }
+    // debug("Motor ");
+    // debug(motorId);
+    // debug(" ON @: ");
+    // debugln(lastStateChange);
+    // if (motorId == 7) {
+    //   debugln();
+    // }
     // -----------------------------
 
     nextToggle = lastStateChange + onMs;
@@ -125,7 +126,14 @@ void HapticPulser::setOnOff(unsigned long onMs_, unsigned long offMs_) {
     }
 
   }
-  
-  
+
+}
+
+void HapticPulser::setNextOnTime(unsigned long time) {
+    drv.setRealtimeValue(128); // neutral
+    state = OFF;
+    lastStateChange = millis();
+    nextToggle = time;
+    debugln(nextToggle);
 }
 

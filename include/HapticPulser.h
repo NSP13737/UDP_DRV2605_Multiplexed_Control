@@ -27,6 +27,15 @@ public:
   void setIntensity(float pct);
   void setOnOff(unsigned long onMs_, unsigned long offMs_);
 
+  /**
+   * @brief Sets next time for motor to turn on at
+   * 
+   * Will reset the state of the pulser to off before setting the next on time
+   *
+   * @param time Time in millis to set next on time
+   */
+  void setNextOnTime(unsigned long time);
+
 private:
   Adafruit_DRV2605 &drv;
   uint8_t motorId;
@@ -61,6 +70,8 @@ private:
    * @return true if auto-calibration completed successfully, false otherwise.
    */
   bool runAutoCal(float ratedVoltage, float odClamp);
+
+  
 
 
 };
