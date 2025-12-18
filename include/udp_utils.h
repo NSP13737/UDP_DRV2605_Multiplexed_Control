@@ -4,7 +4,7 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 
-void setupWireless(const char *ssid, const char *password, const int UdpPort);
+void udpSetupWireless(const char *ssid, const char *password, const int UdpPort);
 
 /**
  * @brief Using quatratic function: Takes the users raw distance from a wall and converts it to a percentage to be used by modulation helpers

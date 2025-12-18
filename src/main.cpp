@@ -15,8 +15,8 @@ std::array<float,8> received_study_params = {};
 float prev_val = 0; // this is for testing in loop()
 
 void setup() {
-  Serial.begin(9600);
-  setupWireless(ssid, password, localUdpPort);
+  Serial.begin(115200);
+  udpSetupWireless(ssid, password, localUdpPort);
   Wire.begin();
   debugln("Program Start");
   
@@ -37,12 +37,12 @@ void loop() {
 
 
   //Below block for testing 
-  if (received_data[0] != prev_val) {
-      debug("Received: ");
-      debugln(received_data[0]);
-      debugflush();
-      prev_val = received_data[0];
-  }
+  // if (received_data[0] != prev_val) {
+  //     debug("Received: ");
+  //     debugln(received_data[0]);
+  //     debugflush();
+  //     prev_val = received_data[0];
+  // }
     
 
   updateBelt(received_distances, received_study_params);
