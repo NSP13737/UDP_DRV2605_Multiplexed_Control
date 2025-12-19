@@ -53,7 +53,6 @@ void HapticPulser::stop() {
 
 void HapticPulser::update() {
 
-  
 
   if (state == IDLE) return;
 
@@ -70,6 +69,17 @@ void HapticPulser::update() {
     state = ON;
     lastStateChange = millis();
     
+    // TEST CODE
+    // ----------------------------
+    debug("Motor ");
+    debug(motorId);
+    debug(" nextToggle is: ");
+    debugln(nextToggle);
+    if (motorId == 7) {
+      debugln();
+    }
+    // -----------------------------
+
     // TEST CODE
     // ----------------------------
     // debug("Motor ");
@@ -104,36 +114,45 @@ void HapticPulser::setOnOff(unsigned long onMs_, unsigned long offMs_) {
   onMs = onMs_;
   offMs = offMs_;
 
-  if (state != IDLE) {
-    unsigned long currentTime = millis();
-    unsigned long elapsedTime = currentTime - lastStateChange;
+  if (state == IDLE) return;
 
-    if (state == ON) {
-      //If elapsedTime is longer than new on time, change state immediately
-      if (elapsedTime >= onMs) {
-        nextToggle = currentTime;
-      } else {
-        nextToggle = lastStateChange + onMs;
-      }
-      
-    } else if (state == OFF) {
-      //If elapsedTime is longer than new off time, change state immediately
-      if (elapsedTime >= offMs) {
-        nextToggle = currentTime;
-      } else {
-        nextToggle = lastStateChange + offMs;
-      }
+  unsigned long currentTime = millis();
+  unsigned long elapsedTime = currentTime - lastStateChange;
+
+  unsigned long desiredNext;
+  if (state == ON) {
+    // If elapsedTime is longer than new on time, schedule immediate toggle
+    if (elapsedTime >= onMs) {
+      desiredNext = currentTime;
+    } else {
+      desiredNext = lastStateChange + onMs;
     }
-
+  } else { // state == OFF
+    // If elapsedTime is longer than new off time, schedule immediate toggle
+    if (elapsedTime >= offMs) {
+      desiredNext = currentTime;
+    } else {
+      desiredNext = lastStateChange + offMs;
+    }
   }
 
+  // Only move nextToggle forward; do not shorten an already-future schedule.
+  // Use signed difference to handle millis() wrap correctly.
+  if ((long)(desiredNext - nextToggle) > 0) {
+    nextToggle = desiredNext;
+  }
 }
 
-void HapticPulser::setNextOnTime(unsigned long time) {
+
+
+void HapticPulser::setNextOnTime(unsigned long fixedDelayedTime) {
     drv.setRealtimeValue(128); // neutral
     state = OFF;
     lastStateChange = millis();
-    nextToggle = time;
-    debugln(nextToggle);
-}
+    nextToggle = fixedDelayedTime;
 
+    // Guard: if the requested nextToggle is already <= now (race/wrap), push it slightly into the future
+    if ((long)(nextToggle - lastStateChange) <= 0) {
+      nextToggle = lastStateChange + 100; // keep off at least 100 ms
+    }
+}

@@ -32,9 +32,10 @@ public:
    * 
    * Will reset the state of the pulser to off before setting the next on time
    *
-   * @param time Time in millis to set next on time
+   * @param fixedTime Syncronized time (generally shared between all pulsers)
+   * @param addedTime Added delay
    */
-  void setNextOnTime(unsigned long time);
+  void setNextOnTime(unsigned long fixedDelayedTime);
 
 private:
   Adafruit_DRV2605 &drv;

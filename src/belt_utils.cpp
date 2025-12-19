@@ -65,14 +65,11 @@ void updateBelt(std::array<float,8> distances, std::array<float,8> study_params)
   study_params_struct.fixed_freq_hz = study_params[6];
   study_params_struct.just_detectable_intensity = study_params[7];
 
-  
+  // If the condition state changes either way, sync the belt
   // If last state hasn't been defined (at start of program), set it to the current condition
   if (lastState == 0) {
-    debugln(lastState);
-    debugln(study_params_struct.condition_selection);
     lastState = study_params_struct.condition_selection;
   }
-  // If the condition state changes either way, sync the belt
   if ((lastState == 2) && (study_params_struct.condition_selection == 1)) {
     lastState = 1;
     syncBelt();
@@ -82,6 +79,7 @@ void updateBelt(std::array<float,8> distances, std::array<float,8> study_params)
     syncBelt();
   }
 
+  // Update belt based on params
   for (int i = 0; i < NUM_DRIVERS; i++) {
     multiplexSelect(i);
     float activation_percentage = rawDistToActivationPercentage(distances[i], study_params_struct.min_activation_dist, study_params_struct.max_activation_dist);
@@ -96,6 +94,7 @@ void updateBelt(std::array<float,8> distances, std::array<float,8> study_params)
         modulatePulseDutyCycle(activation_percentage, pulser[i], study_params_struct.fixed_freq_hz);
         break;
     }
+    
     pulser[i]->update();
   }
 }
@@ -138,11 +137,8 @@ void modulatePulseDutyCycle(float activation_percentage, HapticPulser *pulser, f
 void syncBelt(void) {
   unsigned long fixed_time = millis();
   for (int i = 0; i < NUM_DRIVERS; i++) {
-    debug("Next on time for ");
-    debug(i);
-    debug(": ");
     multiplexSelect(i);
-    pulser[i]->setNextOnTime(fixed_time+10000);
+    pulser[i]->setNextOnTime(fixed_time + 1000); // sets next on time to fixed time + second param
   }
 }
 
