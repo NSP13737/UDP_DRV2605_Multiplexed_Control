@@ -19,23 +19,42 @@ public:
    * @return true if auto-calibration completed successfully (or is doAutoCal=False), false otherwise.
    */
   bool begin(bool doAutoCal = false, float ratedVoltage = 1.0f, float odClamp = 1.5f);
-  void start();
+
+  /**
+   * @brief Starts pulser
+   * @param tickMillis Fixed time sent to all pulsers (so they are all acting on same ticks)
+   */
+  void start(unsigned long tickMillis);
+
   void stop();
-  void update();
+
+  /**
+   * @brief Check if pulser needs updating, if so, update
+   * @param tickMillis Fixed time sent to all pulsers (so they are all acting on same ticks)
+   */
+  void update(unsigned long tickMillis);
+
   bool isOn();
 
   void setIntensity(float pct);
-  void setOnOff(unsigned long onMs_, unsigned long offMs_);
+
+  /**
+   * @brief Sets how long pulser should be on and off for
+   * @param tickMillis Fixed time sent to all pulsers (so they are all acting on same ticks)
+   */
+  void setOnOff(unsigned long onMs_, unsigned long offMs_, unsigned long tickMillis);
+  // For full explanation of this function, see https://gemini.google.com/app/095ddf3e3a3acd50
+  void setOnOffPreservePhase(unsigned long onMs_, unsigned long offMs_, unsigned long tickMillis); //for use with duty cycle modulaiton
 
   /**
    * @brief Sets next time for motor to turn on at
    * 
    * Will reset the state of the pulser to off before setting the next on time
    *
-   * @param fixedTime Syncronized time (generally shared between all pulsers)
-   * @param addedTime Added delay
+   * @param fixedDelay Added delay (delta time in future to set next on time)
+   * @param tickMillis Fixed time sent to all pulsers (so they are all acting on same ticks)
    */
-  void setNextOnTime(unsigned long fixedDelayedTime);
+  void setNextOnTime(unsigned long fixedDelay, unsigned long tickMillis);
 
 private:
   Adafruit_DRV2605 &drv;

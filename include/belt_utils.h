@@ -58,7 +58,7 @@ void modulatePulseFrequency(float activation_percentage, HapticPulser *pulser, f
 void modulatePulseDutyCycle(float activation_percentage, HapticPulser *pulser, float fixed_freq_hz);
 
 /**
- * @brief Sets a common next On time for all pulsers (3sec out)
+ * @brief Sets a common next On time for all pulsers (3sec out). Effectively turns everything off and then back on at the same time
  */
 void syncBelt(void);
 
