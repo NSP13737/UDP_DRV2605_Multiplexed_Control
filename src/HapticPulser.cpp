@@ -111,6 +111,20 @@ void HapticPulser::setIntensity(float pct) {
   }
 }
 
+void HapticPulser::setState(PulserState desiredState) {
+  switch (desiredState) {
+    case 0:
+      state = IDLE;
+      break;
+    case 1:
+      state = ON;
+      break;
+    case 2:
+      state = OFF;
+      break;
+  }
+}
+
 void HapticPulser::setOnOff(unsigned long onMs_, unsigned long offMs_, unsigned long tickMillis) {
   onMs = onMs_;
   offMs = offMs_;
@@ -135,82 +149,6 @@ void HapticPulser::setOnOff(unsigned long onMs_, unsigned long offMs_, unsigned 
   }
 
 }
-
-
-void HapticPulser::setOnOffPreservePhase(unsigned long onMs_, unsigned long offMs_, unsigned long tickMillis) {
-  // If idle just set durations
-  if (state == IDLE) {
-    onMs = onMs_;
-    offMs = offMs_;
-    return;
-  }
-
-  unsigned long oldOn = onMs;
-  unsigned long oldOff = offMs;
-  unsigned long oldPeriod = oldOn + oldOff;
-
-  // If previous period is zero or invalid, fall back to existing behavior
-  if (oldPeriod == 0) {
-    setOnOff(onMs_, offMs_, tickMillis);
-    return;
-  }
-
-  // Compute start of the last ON safely (handle potential underflow)
-  unsigned long lastOnStart;
-  if (state == ON) {
-    lastOnStart = lastStateChange;
-  } else { // OFF
-    if (lastStateChange >= oldOn) {
-      lastOnStart = lastStateChange - oldOn;
-    } else {
-      // handle wrap-around explicitly
-      lastOnStart = (ULONG_MAX - (oldOn - lastStateChange) + 1UL);
-    }
-  }
-
-  // How far into the old cycle we are (unsigned arithmetic handles wrapping)
-  unsigned long timeSinceCycleStart = tickMillis - lastOnStart;
-  unsigned long phasePos = (oldPeriod == 0) ? 0 : (timeSinceCycleStart % oldPeriod);
-  float phase = (float)phasePos / (float)oldPeriod;
-
-  unsigned long newOn = onMs_;
-  unsigned long newOff = offMs_;
-  unsigned long newPeriod = newOn + newOff;
-  if (newPeriod == 0) {
-    // defensively set and return
-    onMs = newOn;
-    offMs = newOff;
-    return;
-  }
-
-  // Map fractional phase into new period (rounded) and clamp
-  unsigned long newPos = (unsigned long)(phase * newPeriod + 0.5f);
-  if (newPos >= newPeriod) newPos = newPeriod - 1;
-
-  unsigned long newLastOnStart = tickMillis - newPos;
-
-  // Apply new phase-consistent state and scheduling
-  onMs = newOn;
-  offMs = newOff;
-  if (newPos < newOn) {
-    state = ON;
-    lastStateChange = newLastOnStart;
-    drv.setRealtimeValue(pctToRtp(intensityPct));
-    nextToggle = lastStateChange + onMs;
-  } else {
-    state = OFF;
-    lastStateChange = newLastOnStart + newOn;
-    drv.setRealtimeValue(128); // neutral while OFF
-    nextToggle = lastStateChange + offMs;
-  }
-
-  // Ensure nextToggle is after now
-  if (nextToggle <= tickMillis) {
-    nextToggle = tickMillis + 1;
-  }
-}
-
-
 
 void HapticPulser::setNextOnTime(unsigned long fixedDelay, unsigned long tickMillis) {
     drv.setRealtimeValue(128); // neutral

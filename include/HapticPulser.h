@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "Adafruit_DRV2605.h"
+#include "enums.h"
 
 // Utility function prototype (if you want it exposed here)
 uint8_t pctToRtp(float percent);
@@ -40,11 +41,15 @@ public:
 
   /**
    * @brief Sets how long pulser should be on and off for
+   * @param desiredState
+   */
+  void setState(PulserState desiredState);
+
+  /**
+   * @brief Sets how long pulser should be on and off for
    * @param tickMillis Fixed time sent to all pulsers (so they are all acting on same ticks)
    */
   void setOnOff(unsigned long onMs_, unsigned long offMs_, unsigned long tickMillis);
-  // For full explanation of this function, see https://gemini.google.com/app/095ddf3e3a3acd50
-  void setOnOffPreservePhase(unsigned long onMs_, unsigned long offMs_, unsigned long tickMillis); //for use with duty cycle modulaiton
 
   /**
    * @brief Sets next time for motor to turn on at
@@ -59,7 +64,7 @@ public:
 private:
   Adafruit_DRV2605 &drv;
   uint8_t motorId;
-  enum { IDLE, ON, OFF } state;
+  PulserState state;
   float intensityPct;
   unsigned long onMs, offMs;
   unsigned long nextToggle;

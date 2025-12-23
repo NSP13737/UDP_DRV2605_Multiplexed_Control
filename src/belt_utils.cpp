@@ -5,13 +5,13 @@
 
 //Global arrays for pointers to motor driver and pulser objects
 namespace {
-  Adafruit_DRV2605* drv[NUM_DRIVERS];
-  HapticPulser* pulser[NUM_DRIVERS];
+  Adafruit_DRV2605* drv[NUM_DRIVERS] = {nullptr};
+  HapticPulser* pulser[NUM_DRIVERS] = {nullptr};
   unsigned long globalTickMillis;
 }
 
 void multiplexSelect(uint8_t i) {
-  if (i > 7) return;
+  if (i >= NUM_DRIVERS) return;
  
   Wire.beginTransmission(MULTIPLEX_ADDR);
   Wire.write(1 << i);
@@ -55,8 +55,19 @@ struct {
   float just_detectable_intensity;
 } study_params_struct;
 
-void updateBelt(std::array<float,8> distances, std::array<float,8> study_params) {
-  static uint8_t previousCondition = 0; // condition as of last tick; initialize w/ sentinal value
+void updateBelt(std::array<float,8>& distances, std::array<float,8>& study_params) {
+  
+  
+  // Only used by duty cycle modulation
+  static uint8_t previousCondition = ConditionState::NONE; // condition as of last tick; initialize w/ sentinal value
+  static float previousFixedFreqHz = -1;
+  //static float previousOnDuration = -1;
+  static unsigned long previousCycleStart = 0;
+  static unsigned long nextCycleStart = 0;
+  static bool isOnState = false;
+  static float fixedPeriodMs;
+  static unsigned long pulserOnDurations[NUM_DRIVERS] = {0};
+
   globalTickMillis = millis();
 
   //Assign params to easy to understand stuct
@@ -69,42 +80,111 @@ void updateBelt(std::array<float,8> distances, std::array<float,8> study_params)
   study_params_struct.fixed_freq_hz = study_params[6];
   study_params_struct.just_detectable_intensity = study_params[7];
 
-  // If the condition state changes either way, sync the belt
-  // If last state hasn't been defined (at start of program), set it to the current condition
+
+  // Logic for making sure cycleStart begins when we change to duty cycle condition
   if (previousCondition == 0) {
     previousCondition = study_params_struct.condition_selection;
   }
-  if ((previousCondition == 2) && (study_params_struct.condition_selection == 1)) {
-    previousCondition = 1;
-    syncBelt();
+  if ((previousCondition == ConditionState::DUTY_CYCLE_MODULATION) && (study_params_struct.condition_selection == ConditionState::FREQUENCY_MODULATION)) {
+    previousCondition = ConditionState::FREQUENCY_MODULATION;
   }
-  else if ((previousCondition == 1) && (study_params_struct.condition_selection == 2)) {
-    previousCondition = 2;
-    syncBelt();
+  else if ((previousCondition == ConditionState::FREQUENCY_MODULATION) && (study_params_struct.condition_selection == ConditionState::DUTY_CYCLE_MODULATION)) {
+    previousCondition = ConditionState::DUTY_CYCLE_MODULATION;
+    unsigned long tmp = millis();
+    previousCycleStart = tmp;
+    nextCycleStart = tmp + hzToPeriodMs(study_params_struct.fixed_freq_hz);
   }
 
-  // Update belt based on params
-  for (int i = 0; i < NUM_DRIVERS; i++) {
-    multiplexSelect(i);
 
-    float activation_percentage = rawDistToActivationPercentage(distances[i], study_params_struct.min_activation_dist, study_params_struct.max_activation_dist);
-
-    //                  READ NOTE FOR DETAIL
-    modulateIntensity(activation_percentage, pulser[i], study_params_struct.just_detectable_intensity);
-    
-    // Switch based on condition chosen
-    switch (study_params_struct.condition_selection) {
-      case 1: //change frequency
-        modulatePulseFrequency(activation_percentage, pulser[i], study_params_struct.min_freq_hz, study_params_struct.max_freq_hz, study_params_struct.fixed_duty_cycle);
-        break;
-      case 2: //change duty cycle 
-        modulatePulseDutyCycle(activation_percentage, pulser[i], study_params_struct.fixed_freq_hz);
-        break;
+  if (study_params_struct.condition_selection == ConditionState::FREQUENCY_MODULATION) { //change frequency (mostly handled by each pulser)
+    for (int i = 0; i < NUM_DRIVERS; i++) {
+      multiplexSelect(i);
+      float activation_percentage = rawDistToActivationPercentage(distances[i], study_params_struct.min_activation_dist, study_params_struct.max_activation_dist);
+      modulateIntensity(activation_percentage, pulser[i], study_params_struct.just_detectable_intensity);
+      modulatePulseFrequency(activation_percentage, pulser[i], study_params_struct.min_freq_hz, study_params_struct.max_freq_hz, study_params_struct.fixed_duty_cycle);
+      pulser[i]->update(globalTickMillis);
     }
-    //SUGGESTED CODE WOULD STOP HERE
-    
-    pulser[i]->update(globalTickMillis); //NOTE ON POTENTIAL IMPORTANT CHANGE: This could be moved into its own for loop outside of this one, so that pulsers are updated right next to one another, but I think giving them all a global tick time will make this redundant
   }
+
+  if (study_params_struct.condition_selection == ConditionState::DUTY_CYCLE_MODULATION) { //change duty cycle (mostly handled by belt manager (this))
+
+    // if fixed frequency has changed, update the fixedPeriod we are using
+    if (previousFixedFreqHz != study_params_struct.fixed_freq_hz) {
+      fixedPeriodMs = hzToPeriodMs(study_params_struct.fixed_freq_hz);
+      previousFixedFreqHz = study_params_struct.fixed_freq_hz;
+    }
+
+    // DEBUG: duty cycle mode snapshot
+    debug("==== DUTY CYCLE DEBUG ====");
+    debug("tick: "); debugln(globalTickMillis);
+    debug("previousCycleStart: "); debugln(previousCycleStart);
+    debug("nextCycleStart: "); debugln(nextCycleStart);
+    debug("fixedPeriodMs: "); debugln(fixedPeriodMs);
+    //debug("previousFixedFreqHz: "); debugln(previousFixedFreqHz);
+    debug("isOnState: "); debugln(isOnState ? 1 : 0);
+    // for (int i = 0; i < NUM_DRIVERS; i++) {
+    //   multiplexSelect(i);
+    //   float act_pct = rawDistToActivationPercentage(distances[i], study_params_struct.min_activation_dist, study_params_struct.max_activation_dist);
+    //   debug("drv "); debugln(i);
+    //   debug("  dist: "); debugln(distances[i]);
+    //   debug("  act%: "); debugln(act_pct);
+    //   debug("  onDur(ms): "); debugln(pulserOnDurations[i]);
+    //   debug("  state(on=1/off=0): "); debugln(pulser[i] ? (pulser[i]->isOn() ? 1 : 0) : -1);
+    // }
+    debug("===========================");
+
+    // If motors are off, and we have passed the flag for nextCycle start, turn all pulsers on
+    if ((!isOnState) && (globalTickMillis >= nextCycleStart)) {
+        //TODO: turn every pulser on
+        for (int i = 0; i < NUM_DRIVERS; i++) {
+          multiplexSelect(i);
+          float activation_percentage = rawDistToActivationPercentage(distances[i], study_params_struct.min_activation_dist, study_params_struct.max_activation_dist);
+          modulateIntensity(activation_percentage, pulser[i], study_params_struct.just_detectable_intensity);
+          pulserOnDurations[i] = activation_percentage * fixedPeriodMs;
+          pulser[i]-> setState(PulserState::ON);
+        }
+        isOnState = true; 
+        previousCycleStart = nextCycleStart;
+        nextCycleStart = nextCycleStart + static_cast<unsigned long>(fixedPeriodMs);
+    }
+
+    else if (isOnState) { //check if we need to turn any of the pulsers off
+      
+      // While running routine to check if any pulsers need to stop, check if ALL pulsers are off. If so, recalculate nextCycleStart and turn isOnState off
+      bool anyPulsersOn = false; // Start assuming they are all off
+
+      for (int i = 0; i < NUM_DRIVERS; i++) { 
+        multiplexSelect(i);
+        if (globalTickMillis > (previousCycleStart + pulserOnDurations[i])) {
+          pulser[i]->setState(PulserState::OFF);
+        }
+
+        if (pulser[i]->isOn()) {
+          anyPulsersOn = true;
+        }
+      }
+
+      if (!anyPulsersOn) { //if all pulsers are off
+        previousCycleStart = nextCycleStart;
+        nextCycleStart = nextCycleStart + static_cast<unsigned long>(fixedPeriodMs);
+        isOnState = false;
+      }
+
+    }
+    //REMOVE THIS
+    // //update each pulser
+    // for (int i = 0; i < NUM_DRIVERS; i++) {
+    //   multiplexSelect(i);
+    //   float activation_percentage = rawDistToActivationPercentage(distances[i], study_params_struct.min_activation_dist, study_params_struct.max_activation_dist);
+    //   modulateIntensity(activation_percentage, pulser[i], study_params_struct.just_detectable_intensity);
+    //   modulatePulseDutyCycle(activation_percentage, pulser[i], study_params_struct.fixed_freq_hz);
+
+
+      
+    // }
+  }
+
+
 }
 
 float rawDistToActivationPercentage(float distance, float min_activation_dist, float max_activation_dist) {
@@ -132,17 +212,19 @@ void modulateIntensity(float activation_percentage, HapticPulser *pulser, float 
 
 void modulatePulseFrequency(float activation_percentage, HapticPulser *pulser, float min_freq_hz, float max_freq_hz, float fixed_duty_cycle) {
   float freqHz = ((activation_percentage)*(max_freq_hz - min_freq_hz)) + min_freq_hz;
-  float periodMs = 1000.0 / freqHz;
+  unsigned long periodMs = hzToPeriodMs(freqHz);
 
   pulser->setOnOff(periodMs * fixed_duty_cycle, periodMs * (1 - fixed_duty_cycle), globalTickMillis);
 }
 
-void modulatePulseDutyCycle(float activation_percentage, HapticPulser *pulser, float fixed_freq_hz) {
-  float fixed_period_ms = 1000.0f / fixed_freq_hz;
-  pulser->setOnOffPreservePhase((unsigned long)(fixed_period_ms * activation_percentage), 
-                                  (unsigned long)(fixed_period_ms - (fixed_period_ms * activation_percentage)), 
-                                  globalTickMillis);
-}
+
+//REMOVE THIS
+// void modulatePulseDutyCycle(float activation_percentage, HapticPulser *pulser, float fixed_freq_hz) {
+//   float fixed_period_ms = 1000.0f / fixed_freq_hz;
+//   pulser->setOnOffPreservePhase((unsigned long)(fixed_period_ms * activation_percentage), 
+//                                   (unsigned long)(fixed_period_ms - (fixed_period_ms * activation_percentage)), 
+//                                   globalTickMillis);
+// }
 
 void syncBelt(void) {
   for (int i = 0; i < NUM_DRIVERS; i++) {
@@ -150,5 +232,16 @@ void syncBelt(void) {
     pulser[i]->setNextOnTime(2000, globalTickMillis); // sets next on time to fixed time + second param
   }
   delay(2000); // Delay everything so that belt does not try to update and override syncing during sync time
+}
+
+unsigned long hzToPeriodMs(float hz) {
+  unsigned long period;
+  if (hz > 0.0f) {
+          period = 1000.0f / hz;
+        }
+        else {
+          period = 0;
+        }
+  return period;
 }
 
