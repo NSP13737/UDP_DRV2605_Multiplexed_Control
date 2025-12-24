@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "Adafruit_DRV2605.h"
+#include "enums.h"
 
 // Utility function prototype (if you want it exposed here)
 uint8_t pctToRtp(float percent);
@@ -19,13 +20,39 @@ public:
    * @return true if auto-calibration completed successfully (or is doAutoCal=False), false otherwise.
    */
   bool begin(bool doAutoCal = false, float ratedVoltage = 1.0f, float odClamp = 1.5f);
-  void start();
+
+  /**
+   * @brief Starts pulser
+   * @param tickMillis Fixed time sent to all pulsers (so they are all acting on same ticks)
+   */
+  void start(unsigned long tickMillis);
+
   void stop();
-  void update();
+
+  /**
+   * @brief Check if pulser needs updating, if so, update
+   * @param tickMillis Fixed time sent to all pulsers (so they are all acting on same ticks)
+   */
+  void update(unsigned long tickMillis);
+
   bool isOn();
 
   void setIntensity(float pct);
-  void setOnOff(unsigned long onMs_, unsigned long offMs_);
+
+  /**
+   * @brief Sets how long pulser should be on and off for
+   * @param desiredState
+   */
+  void setState(PulserState desiredState);
+
+  /**
+   * @brief Sets how long pulser should be on and off for
+   * @param tickMillis Fixed time sent to all pulsers (so they are all acting on same ticks)
+   */
+  void setOnOff(unsigned long onMs_, unsigned long offMs_, unsigned long tickMillis);
+
+  void forceOff(void);
+
 
   /**
    * @brief Sets next time for motor to turn on at
@@ -40,7 +67,7 @@ public:
 private:
   Adafruit_DRV2605 &drv;
   uint8_t motorId;
-  enum { IDLE, ON, OFF } state;
+  PulserState state;
   float intensityPct;
   unsigned long onMs, offMs;
   unsigned long nextToggle;

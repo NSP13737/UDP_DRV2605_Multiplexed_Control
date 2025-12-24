@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "HapticPulser.h"
+#include "enums.h"
 
 #define NUM_DRIVERS 8
 #define MULTIPLEX_ADDR 0x70
@@ -21,7 +22,7 @@ bool setupBelt();
    * @param participant_condition 1 = duty cycle modulation; 2 = total pulse time modulation
    * @return none
 */
-void updateBelt(std::array<float,8> distances, std::array<float,8> study_params);
+void updateBelt(std::array<float,8>& distances, std::array<float,8>& study_params);
 
 /**
  * @brief Using quatratic function: Takes the users raw distance from a wall and converts it to a percentage to be used by modulation helpers
@@ -58,9 +59,15 @@ void modulatePulseFrequency(float activation_percentage, HapticPulser *pulser, f
 void modulatePulseDutyCycle(float activation_percentage, HapticPulser *pulser, float fixed_freq_hz);
 
 /**
+<<<<<<< HEAD
  * @brief Sets a common next On time for all pulsers (3sec out)
  */
 void syncBelt(void);
+=======
+ * @brief Converts hz to period in Ms. If hz is 0, period is also set to 0 (to avoid div by 0)
+ */
+unsigned long hzToPeriodMs(float hz);
+>>>>>>> fixing_duty_cycle
 
 
 #endif

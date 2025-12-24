@@ -21,8 +21,8 @@ HapticPulser::HapticPulser(Adafruit_DRV2605 &d, uint8_t id) : drv(d), motorId(id
 
 bool HapticPulser::begin(bool doAutoCal, float ratedVoltage, float odClamp) {
   intensityPct = 0.0f;
-  onMs = 500;
-  offMs = 500;
+  onMs = 2000;
+  offMs = 2000;
   drv.setMode(DRV2605_MODE_REALTIME);
 
   if (doAutoCal) {
@@ -37,11 +37,12 @@ bool HapticPulser::begin(bool doAutoCal, float ratedVoltage, float odClamp) {
   return true;
 }
 
-void HapticPulser::start() {
+void HapticPulser::start(unsigned long tickMillis) {
   if (state == IDLE) {
     drv.setRealtimeValue(pctToRtp(intensityPct));
     state = ON;
-    nextToggle = millis() + onMs;
+    lastStateChange = tickMillis;
+    nextToggle = tickMillis + onMs;
   }
 }
 
@@ -51,23 +52,24 @@ void HapticPulser::stop() {
   state = IDLE;
 }
 
-void HapticPulser::update() {
-
+void HapticPulser::update(unsigned long tickMillis) {
 
   if (state == IDLE) return;
 
-  if (millis() < nextToggle) return;
+  if (tickMillis < nextToggle) return;
 
   else if (state == ON) {
     drv.setRealtimeValue(128); // neutral
     state = OFF;
-    lastStateChange = millis();
+    lastStateChange = tickMillis;
     nextToggle = lastStateChange + offMs;
+    
     
   } else if (state == OFF) {
     drv.setRealtimeValue(pctToRtp(intensityPct));
     state = ON;
-    lastStateChange = millis();
+    lastStateChange = tickMillis;
+    
     
     // TEST CODE
     // ----------------------------
@@ -90,8 +92,8 @@ void HapticPulser::update() {
     //   debugln();
     // }
     // -----------------------------
-
     nextToggle = lastStateChange + onMs;
+  
     
   }
 }
@@ -110,49 +112,35 @@ void HapticPulser::setIntensity(float pct) {
   }
 }
 
-void HapticPulser::setOnOff(unsigned long onMs_, unsigned long offMs_) {
+void HapticPulser::setState(PulserState desiredState) {
+  state = desiredState;
+}
+
+void HapticPulser::setOnOff(unsigned long onMs_, unsigned long offMs_, unsigned long tickMillis) {
   onMs = onMs_;
   offMs = offMs_;
 
   if (state == IDLE) return;
+  unsigned long elapsedTime = tickMillis - lastStateChange;
 
-  unsigned long currentTime = millis();
-  unsigned long elapsedTime = currentTime - lastStateChange;
-
-  unsigned long desiredNext;
   if (state == ON) {
     // If elapsedTime is longer than new on time, schedule immediate toggle
     if (elapsedTime >= onMs) {
-      desiredNext = currentTime;
+      nextToggle = tickMillis;
     } else {
-      desiredNext = lastStateChange + onMs;
+      nextToggle = lastStateChange + onMs;
     }
   } else { // state == OFF
     // If elapsedTime is longer than new off time, schedule immediate toggle
     if (elapsedTime >= offMs) {
-      desiredNext = currentTime;
+      nextToggle = tickMillis;
     } else {
-      desiredNext = lastStateChange + offMs;
+      nextToggle = lastStateChange + offMs;
     }
   }
 
-  // Only move nextToggle forward; do not shorten an already-future schedule.
-  // Use signed difference to handle millis() wrap correctly.
-  if ((long)(desiredNext - nextToggle) > 0) {
-    nextToggle = desiredNext;
-  }
 }
 
-
-
-void HapticPulser::setNextOnTime(unsigned long fixedDelayedTime) {
-    drv.setRealtimeValue(128); // neutral
-    state = OFF;
-    lastStateChange = millis();
-    nextToggle = fixedDelayedTime;
-
-    // Guard: if the requested nextToggle is already <= now (race/wrap), push it slightly into the future
-    if ((long)(nextToggle - lastStateChange) <= 0) {
-      nextToggle = lastStateChange + 100; // keep off at least 100 ms
-    }
+void HapticPulser::forceOff(void) {
+  drv.setRealtimeValue(128);
 }
