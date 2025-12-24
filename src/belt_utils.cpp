@@ -64,7 +64,7 @@ void updateBelt(std::array<float,8>& distances, std::array<float,8>& study_param
   //static float previousOnDuration = -1;
   static unsigned long previousCycleStart = 0;
   static unsigned long nextCycleStart = 0;
-  static bool isOnState = false;
+  static bool beltStateIsOn = false;
   static float fixedPeriodMs;
   static unsigned long pulserOnDurations[NUM_DRIVERS] = {0};
 
@@ -93,7 +93,7 @@ void updateBelt(std::array<float,8>& distances, std::array<float,8>& study_param
     unsigned long tmp = globalTickMillis;
     previousCycleStart = tmp;
     nextCycleStart = tmp + hzToPeriodMs(study_params_struct.fixed_freq_hz);
-    isOnState = false;
+    beltStateIsOn = false;
   }
 
 
@@ -116,13 +116,16 @@ void updateBelt(std::array<float,8>& distances, std::array<float,8>& study_param
     }
 
     // // DEBUG: duty cycle mode snapshot
-    // debugln("==== DUTY CYCLE DEBUG ====");
+    // //clear serial monitor
+    // debug("\033[2J"); 
+    // debug("\033[H");
+    debugln("==== DUTY CYCLE DEBUG ====");
     // debug("tick: "); debugln(globalTickMillis);
     // debug("previousCycleStart: "); debugln(previousCycleStart);
     // debug("nextCycleStart: "); debugln(nextCycleStart);
     // debug("fixedPeriodMs: "); debugln(fixedPeriodMs);
     // //debug("previousFixedFreqHz: "); debugln(previousFixedFreqHz);
-    // debug("isOnState: "); debugln(isOnState ? 1 : 0);
+    debug("beltStateIsOn: "); debugln(beltStateIsOn ? 1 : 0);
     // // for (int i = 0; i < NUM_DRIVERS; i++) {
     // //   multiplexSelect(i);
     // //   float act_pct = rawDistToActivationPercentage(distances[i], study_params_struct.min_activation_dist, study_params_struct.max_activation_dist);
@@ -132,51 +135,61 @@ void updateBelt(std::array<float,8>& distances, std::array<float,8>& study_param
     // //   debug("  onDur(ms): "); debugln(pulserOnDurations[i]);
     // //   debug("  state(on=1/off=0): "); debugln(pulser[i] ? (pulser[i]->isOn() ? 1 : 0) : -1);
     // // }
-    // debug("===========================");
+    debug("===========================");
+    debugflush();
 
     // If motors are off, and we have passed the flag for nextCycle start, turn all pulsers on
-    if ((!isOnState) && (globalTickMillis >= nextCycleStart)) {
-
+    if ((!beltStateIsOn) && (globalTickMillis >= nextCycleStart)) {
+      //debug("\033[2J"); 
+      //debug("\033[H");
       for (int i = 0; i < NUM_DRIVERS; i++) {
         multiplexSelect(i);
         float activation_percentage = rawDistToActivationPercentage(distances[i], study_params_struct.min_activation_dist, study_params_struct.max_activation_dist);
-        modulateIntensity(activation_percentage, pulser[i], study_params_struct.just_detectable_intensity);
+        //debug("Pulser "); debug(i); debug(" Activation%: "); debugln(activation_percentage);
         pulserOnDurations[i] = activation_percentage * fixedPeriodMs;
         pulser[i]->setState(PulserState::ON);
-        pulser[i]->update(globalTickMillis, true);
+        modulateIntensity(activation_percentage, pulser[i], study_params_struct.just_detectable_intensity);
       }
+      //debugflush();
 
-      isOnState = true; 
+      beltStateIsOn = true; 
       previousCycleStart = nextCycleStart;
       nextCycleStart = nextCycleStart + static_cast<unsigned long>(fixedPeriodMs);   
       
     }
 
-    else if (isOnState) { //check if we need to turn any of the pulsers off
+    else if (beltStateIsOn) { //some/all pulsers are on, check if we need to turn any of the pulsers off
       
       // While running routine to check if any pulsers need to stop, check if ALL pulsers are off. If so, recalculate nextCycleStart and turn isOnState off
       bool anyPulsersOn = false; // Start assuming they are all off
 
       for (int i = 0; i < NUM_DRIVERS; i++) { 
         multiplexSelect(i);
-        if (globalTickMillis > (previousCycleStart + pulserOnDurations[i])) {
+
+        if (pulser[i]->isOn() && (globalTickMillis > (previousCycleStart + pulserOnDurations[i]))) { //check if we need to turn this pulser off
           pulser[i]->setState(PulserState::OFF);
+          pulser[i]->forceOff();
         }
-
-        pulser[i]->update(globalTickMillis, true);
-
-        if (pulser[i]->isOn()) {
+        else if (pulser[i]->isOn()) { // if we don't need to turn it off this time, and it is on, update intensity
+          float activation_percentage = rawDistToActivationPercentage(distances[i], study_params_struct.min_activation_dist, study_params_struct.max_activation_dist);
+          modulateIntensity(activation_percentage, pulser[i], study_params_struct.just_detectable_intensity);
           anyPulsersOn = true;
+        }
+        else {
+          ; // this means this specific pulser is already off, so we should keep it off until it turns on
         }
 
       }
 
       if (!anyPulsersOn) { //if all pulsers are off
-        previousCycleStart = nextCycleStart;
-        nextCycleStart = nextCycleStart + static_cast<unsigned long>(fixedPeriodMs);
-        isOnState = false;
+        // previousCycleStart = nextCycleStart;
+        // nextCycleStart = nextCycleStart + static_cast<unsigned long>(fixedPeriodMs);
+        beltStateIsOn = false;
       }
 
+    }
+    else {
+      ; //this means the entire belt is off, so we can just leave it off until we want to turn it on again
     }
     //REMOVE THIS
     // //update each pulser

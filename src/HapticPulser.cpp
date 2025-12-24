@@ -41,6 +41,7 @@ void HapticPulser::start(unsigned long tickMillis) {
   if (state == IDLE) {
     drv.setRealtimeValue(pctToRtp(intensityPct));
     state = ON;
+    lastStateChange = tickMillis;
     nextToggle = tickMillis + onMs;
   }
 }
@@ -51,7 +52,7 @@ void HapticPulser::stop() {
   state = IDLE;
 }
 
-void HapticPulser::update(unsigned long tickMillis, bool disableStateManagement) {
+void HapticPulser::update(unsigned long tickMillis) {
 
   if (state == IDLE) return;
 
@@ -59,18 +60,16 @@ void HapticPulser::update(unsigned long tickMillis, bool disableStateManagement)
 
   else if (state == ON) {
     drv.setRealtimeValue(128); // neutral
-    if (!disableStateManagement) {
-      state = OFF;
-      lastStateChange = tickMillis;
-      nextToggle = lastStateChange + offMs;
-    }
+    state = OFF;
+    lastStateChange = tickMillis;
+    nextToggle = lastStateChange + offMs;
+    
     
   } else if (state == OFF) {
     drv.setRealtimeValue(pctToRtp(intensityPct));
-    if (!disableStateManagement) {
-      state = ON;
-      lastStateChange = tickMillis;
-    }
+    state = ON;
+    lastStateChange = tickMillis;
+    
     
     // TEST CODE
     // ----------------------------
@@ -93,9 +92,8 @@ void HapticPulser::update(unsigned long tickMillis, bool disableStateManagement)
     //   debugln();
     // }
     // -----------------------------
-    if (!disableStateManagement) {
-      nextToggle = lastStateChange + onMs;
-    }
+    nextToggle = lastStateChange + onMs;
+  
     
   }
 }
@@ -115,17 +113,7 @@ void HapticPulser::setIntensity(float pct) {
 }
 
 void HapticPulser::setState(PulserState desiredState) {
-  switch (desiredState) {
-    case 0:
-      state = IDLE;
-      break;
-    case 1:
-      state = ON;
-      break;
-    case 2:
-      state = OFF;
-      break;
-  }
+  state = desiredState;
 }
 
 void HapticPulser::setOnOff(unsigned long onMs_, unsigned long offMs_, unsigned long tickMillis) {
@@ -151,4 +139,8 @@ void HapticPulser::setOnOff(unsigned long onMs_, unsigned long offMs_, unsigned 
     }
   }
 
+}
+
+void HapticPulser::forceOff(void) {
+  drv.setRealtimeValue(128);
 }

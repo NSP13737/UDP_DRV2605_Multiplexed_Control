@@ -33,7 +33,7 @@ public:
    * @brief Check if pulser needs updating, if so, update
    * @param tickMillis Fixed time sent to all pulsers (so they are all acting on same ticks)
    */
-  void update(unsigned long tickMillis, bool disableStateManagement = false);
+  void update(unsigned long tickMillis);
 
   bool isOn();
 
@@ -50,6 +50,8 @@ public:
    * @param tickMillis Fixed time sent to all pulsers (so they are all acting on same ticks)
    */
   void setOnOff(unsigned long onMs_, unsigned long offMs_, unsigned long tickMillis);
+
+  void forceOff(void);
 
 
 private:
