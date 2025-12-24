@@ -69,29 +69,6 @@ void HapticPulser::update(unsigned long tickMillis) {
     drv.setRealtimeValue(pctToRtp(intensityPct));
     state = ON;
     lastStateChange = tickMillis;
-    
-    
-    // TEST CODE
-    // ----------------------------
-    debug("Motor ");
-    debug(motorId);
-    debug(" nextToggle is: ");
-    debugln(nextToggle);
-    if (motorId == 7) {
-      debugln();
-    }
-    // -----------------------------
-
-    // TEST CODE
-    // ----------------------------
-    // debug("Motor ");
-    // debug(motorId);
-    // debug(" ON @: ");
-    // debugln(lastStateChange);
-    // if (motorId == 7) {
-    //   debugln();
-    // }
-    // -----------------------------
     nextToggle = lastStateChange + onMs;
   
     

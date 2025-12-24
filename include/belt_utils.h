@@ -51,23 +51,9 @@ void modulateIntensity(float activation_percentage, HapticPulser *pulser, float 
 void modulatePulseFrequency(float activation_percentage, HapticPulser *pulser, float min_freq_hz, float max_freq_hz, float fixed_duty_cycle);
 
 /**
- * @brief Modulates the % duration spent vibrating during one pulse
- * @param activation_percentage
- * @param pulser pulser to modulate
- * @param fixed_freq_hz the frequency of pulses. Remains constant regardless of duty cycle
- */
-void modulatePulseDutyCycle(float activation_percentage, HapticPulser *pulser, float fixed_freq_hz);
-
-/**
-<<<<<<< HEAD
- * @brief Sets a common next On time for all pulsers (3sec out)
- */
-void syncBelt(void);
-=======
  * @brief Converts hz to period in Ms. If hz is 0, period is also set to 0 (to avoid div by 0)
  */
 unsigned long hzToPeriodMs(float hz);
->>>>>>> fixing_duty_cycle
 
 
 #endif

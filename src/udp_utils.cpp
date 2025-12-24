@@ -11,8 +11,7 @@ void udpSetupWireless(const char *ssid, const char *password, const int UdpPort)
   
     WiFi.softAP(ssid, password);
     IPAddress ip = WiFi.softAPIP();
-    debug("ESP32 AP IP: ");
-    debugln(ip);
+    debug("ESP32 AP IP: "); debugln(ip);
 
     // Start UDP server
     udp.begin(UdpPort);

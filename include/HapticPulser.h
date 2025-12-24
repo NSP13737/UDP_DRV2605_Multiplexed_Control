@@ -51,18 +51,10 @@ public:
    */
   void setOnOff(unsigned long onMs_, unsigned long offMs_, unsigned long tickMillis);
 
-  void forceOff(void);
-
-
   /**
-   * @brief Sets next time for motor to turn on at
-   * 
-   * Will reset the state of the pulser to off before setting the next on time
-   *
-   * @param fixedTime Syncronized time (generally shared between all pulsers)
-   * @param addedTime Added delay
+   * @brief Sets intensity to neutral state. Does NOT change pulser state
    */
-  void setNextOnTime(unsigned long fixedDelayedTime);
+  void forceOff(void);
 
 private:
   Adafruit_DRV2605 &drv;
