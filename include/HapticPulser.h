@@ -33,7 +33,7 @@ public:
    * @brief Check if pulser needs updating, if so, update
    * @param tickMillis Fixed time sent to all pulsers (so they are all acting on same ticks)
    */
-  void update(unsigned long tickMillis);
+  void update(unsigned long tickMillis, bool disableStateManagement = false);
 
   bool isOn();
 
@@ -51,15 +51,6 @@ public:
    */
   void setOnOff(unsigned long onMs_, unsigned long offMs_, unsigned long tickMillis);
 
-  /**
-   * @brief Sets next time for motor to turn on at
-   * 
-   * Will reset the state of the pulser to off before setting the next on time
-   *
-   * @param fixedDelay Added delay (delta time in future to set next on time)
-   * @param tickMillis Fixed time sent to all pulsers (so they are all acting on same ticks)
-   */
-  void setNextOnTime(unsigned long fixedDelay, unsigned long tickMillis);
 
 private:
   Adafruit_DRV2605 &drv;

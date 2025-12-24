@@ -39,10 +39,9 @@ bool HapticPulser::begin(bool doAutoCal, float ratedVoltage, float odClamp) {
 
 void HapticPulser::start(unsigned long tickMillis) {
   if (state == IDLE) {
-    this->setNextOnTime(20000, tickMillis);
-    // drv.setRealtimeValue(pctToRtp(intensityPct));
-    // state = ON;
-    // nextToggle = millis() + onMs;
+    drv.setRealtimeValue(pctToRtp(intensityPct));
+    state = ON;
+    nextToggle = tickMillis + onMs;
   }
 }
 
@@ -52,8 +51,7 @@ void HapticPulser::stop() {
   state = IDLE;
 }
 
-void HapticPulser::update(unsigned long tickMillis) {
-
+void HapticPulser::update(unsigned long tickMillis, bool disableStateManagement) {
 
   if (state == IDLE) return;
 
@@ -61,14 +59,18 @@ void HapticPulser::update(unsigned long tickMillis) {
 
   else if (state == ON) {
     drv.setRealtimeValue(128); // neutral
-    state = OFF;
-    lastStateChange = tickMillis;
-    nextToggle = lastStateChange + offMs;
+    if (!disableStateManagement) {
+      state = OFF;
+      lastStateChange = tickMillis;
+      nextToggle = lastStateChange + offMs;
+    }
     
   } else if (state == OFF) {
     drv.setRealtimeValue(pctToRtp(intensityPct));
-    state = ON;
-    lastStateChange = tickMillis;
+    if (!disableStateManagement) {
+      state = ON;
+      lastStateChange = tickMillis;
+    }
     
     // TEST CODE
     // ----------------------------
@@ -91,8 +93,9 @@ void HapticPulser::update(unsigned long tickMillis) {
     //   debugln();
     // }
     // -----------------------------
-
-    nextToggle = lastStateChange + onMs;
+    if (!disableStateManagement) {
+      nextToggle = lastStateChange + onMs;
+    }
     
   }
 }
@@ -148,16 +151,4 @@ void HapticPulser::setOnOff(unsigned long onMs_, unsigned long offMs_, unsigned 
     }
   }
 
-}
-
-void HapticPulser::setNextOnTime(unsigned long fixedDelay, unsigned long tickMillis) {
-    drv.setRealtimeValue(128); // neutral
-    state = OFF;
-    lastStateChange = tickMillis;
-    nextToggle = fixedDelay + tickMillis;
-
-    // Guard: if the requested nextToggle is already <= now (race/wrap), push it slightly into the future
-    if ((long)(nextToggle - lastStateChange) <= 0) {
-      nextToggle = lastStateChange + 100; // keep off at least 100 ms
-    }
 }
