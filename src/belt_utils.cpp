@@ -99,13 +99,14 @@ void updateBelt(std::array<float,8>& distances, std::array<float,8>& study_param
     for (int i = 0; i < NUM_DRIVERS; i++) {
       multiplexSelect(i);
       float activation_percentage = rawDistToActivationPercentage(distances[i], study_params_struct.min_activation_dist, study_params_struct.max_activation_dist);
+      //NOTE: In this branch, modulating intensity simply sets it to just_detectable_intensity
       modulateIntensity(activation_percentage, pulser[i], study_params_struct.just_detectable_intensity);
       modulatePulseFrequency(activation_percentage, pulser[i], study_params_struct.min_freq_hz, study_params_struct.max_freq_hz, study_params_struct.fixed_duty_cycle);
       pulser[i]->update(globalTickMillis);
     }
   }
 
-  if (study_params_struct.condition_selection == ConditionState::DUTY_CYCLE_MODULATION) { //change duty cycle (mostly handled by belt manager (this))
+  if (study_params_struct.condition_selection == ConditionState::DUTY_CYCLE_MODULATION) { //change duty cycle (mostly handled by belt manager (this file))
 
     // if fixed frequency has changed, update the fixedPeriod we are using
     if (previousFixedFreqHz != study_params_struct.fixed_freq_hz) {
@@ -121,6 +122,7 @@ void updateBelt(std::array<float,8>& distances, std::array<float,8>& study_param
         float activation_percentage = rawDistToActivationPercentage(distances[i], study_params_struct.min_activation_dist, study_params_struct.max_activation_dist);
         pulserOnDurations[i] = activation_percentage * fixedPeriodMs;
         pulser[i]->setState(PulserState::ON);
+        //NOTE: In this branch, modulating intensity simply sets it to just_detectable_intensity
         modulateIntensity(activation_percentage, pulser[i], study_params_struct.just_detectable_intensity);
       }
 
@@ -144,6 +146,7 @@ void updateBelt(std::array<float,8>& distances, std::array<float,8>& study_param
         }
         else if (pulser[i]->isOn()) { // if we don't need to turn it off this time, and it is on, update intensity
           float activation_percentage = rawDistToActivationPercentage(distances[i], study_params_struct.min_activation_dist, study_params_struct.max_activation_dist);
+          //NOTE: In this branch, modulating intensity simply sets it to just_detectable_intensity
           modulateIntensity(activation_percentage, pulser[i], study_params_struct.just_detectable_intensity);
           anyPulsersOn = true;
         }
@@ -181,14 +184,8 @@ float rawDistToActivationPercentage(float distance, float min_activation_dist, f
 }
 
 void modulateIntensity(float activation_percentage, HapticPulser *pulser, float just_detectable_intensity) {
-  //Set to 0 if distance is not in range (without this, when dist is out of range, motor will activate at just_detectable_intensity)
-  if (activation_percentage == 0.0f) {
-    pulser->setIntensity(0.0f);
-  }
-  //Otherwise use normally
-  else {
-    pulser->setIntensity(((activation_percentage-1)*(1-just_detectable_intensity))+1);
-  }
+  
+  pulser->setIntensity(just_detectable_intensity);
   
 }
 
