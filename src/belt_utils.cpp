@@ -21,21 +21,24 @@ void multiplexSelect(uint8_t i) {
 bool setupBelt() {
   globalTickMillis = millis();
   for (int i = 0; i < NUM_DRIVERS; i++) {
-      multiplexSelect(i);
-      drv[i] = new Adafruit_DRV2605();
-      // Start each drv
-      if (!drv[i]->begin()) {
-        debug("Could not find DRV2605 #"); debugln(i);
-        return false;
-      }
-      delay(100);
-      // Create and start each pulser
-      pulser[i] = new HapticPulser(*drv[i], i);
-      if (! pulser[i]->begin(true, 3.8f, 5.0f)) {
-        debug("Could not begin pulser #"); debugln(i);
-        return false;
-      }
-      pulser[i]->start(globalTickMillis);
+    if ((i == 1) || (i == 2) || (i == 3)) {
+      continue;
+    }
+    multiplexSelect(i);
+    drv[i] = new Adafruit_DRV2605();
+    // Start each drv
+    if (!drv[i]->begin()) {
+      debug("Could not find DRV2605 #"); debugln(i);
+      return false;
+    }
+    delay(100);
+    // Create and start each pulser
+    pulser[i] = new HapticPulser(*drv[i], i);
+    if (! pulser[i]->begin(true, 3.8f, 5.0f)) {
+      debug("Could not begin pulser #"); debugln(i);
+      return false;
+    }
+    pulser[i]->start(globalTickMillis);
   }
   delay(50);
   return true;
@@ -97,6 +100,9 @@ void updateBelt(std::array<float,8>& distances, std::array<float,8>& study_param
 
   if (study_params_struct.condition_selection == ConditionState::FREQUENCY_MODULATION) { //change frequency (mostly handled by each pulser)
     for (int i = 0; i < NUM_DRIVERS; i++) {
+      if ((i == 1) || (i == 2) || (i == 3)) {
+        continue;
+      }
       multiplexSelect(i);
       float activation_percentage = rawDistToActivationPercentage(distances[i], study_params_struct.min_activation_dist, study_params_struct.max_activation_dist);
       modulateIntensity(activation_percentage, pulser[i], study_params_struct.just_detectable_intensity);
@@ -117,6 +123,9 @@ void updateBelt(std::array<float,8>& distances, std::array<float,8>& study_param
     if ((!beltStateIsOn) && (globalTickMillis >= nextCycleStart)) {
   
       for (int i = 0; i < NUM_DRIVERS; i++) {
+        if ((i == 1) || (i == 2) || (i == 3)) {
+          continue;
+        }
         multiplexSelect(i);
         float activation_percentage = rawDistToActivationPercentage(distances[i], study_params_struct.min_activation_dist, study_params_struct.max_activation_dist);
         pulserOnDurations[i] = activation_percentage * fixedPeriodMs;
@@ -136,6 +145,9 @@ void updateBelt(std::array<float,8>& distances, std::array<float,8>& study_param
       bool anyPulsersOn = false; // Start assuming they are all off
 
       for (int i = 0; i < NUM_DRIVERS; i++) { 
+        if ((i == 1) || (i == 2) || (i == 3)) {
+          continue;
+        }
         multiplexSelect(i);
 
         if (pulser[i]->isOn() && (globalTickMillis > (previousCycleStart + pulserOnDurations[i]))) { //check if we need to turn this pulser off
