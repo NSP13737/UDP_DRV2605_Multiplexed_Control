@@ -33,7 +33,7 @@
 #include "WProgram.h"
 #endif
 
-#include <Adafruit_DRV2605.h>
+#include "Adafruit_DRV2605.h"
 
 /*========================================================================*/
 /*                            CONSTRUCTORS                                */

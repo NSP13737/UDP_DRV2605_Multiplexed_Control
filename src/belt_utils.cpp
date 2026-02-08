@@ -21,7 +21,7 @@ void multiplexSelect(uint8_t i) {
 bool setupBelt() {
   globalTickMillis = millis();
   for (int i = 0; i < NUM_DRIVERS; i++) {
-    if ((i == 1) || (i == 2) || (i == 3)) {
+    if ((i == 3) || (i == 4) || (i == 5)) {
       continue;
     }
     multiplexSelect(i);
@@ -100,7 +100,7 @@ void updateBelt(std::array<float,8>& distances, std::array<float,8>& study_param
 
   if (study_params_struct.condition_selection == ConditionState::FREQUENCY_MODULATION) { //change frequency (mostly handled by each pulser)
     for (int i = 0; i < NUM_DRIVERS; i++) {
-      if ((i == 1) || (i == 2) || (i == 3)) {
+      if ((i == 3) || (i == 4) || (i == 5)) {
         continue;
       }
       multiplexSelect(i);
@@ -123,7 +123,7 @@ void updateBelt(std::array<float,8>& distances, std::array<float,8>& study_param
     if ((!beltStateIsOn) && (globalTickMillis >= nextCycleStart)) {
   
       for (int i = 0; i < NUM_DRIVERS; i++) {
-        if ((i == 1) || (i == 2) || (i == 3)) {
+        if ((i == 3) || (i == 4) || (i == 5)) {
           continue;
         }
         multiplexSelect(i);
@@ -145,7 +145,7 @@ void updateBelt(std::array<float,8>& distances, std::array<float,8>& study_param
       bool anyPulsersOn = false; // Start assuming they are all off
 
       for (int i = 0; i < NUM_DRIVERS; i++) { 
-        if ((i == 1) || (i == 2) || (i == 3)) {
+        if ((i == 3) || (i == 4) || (i == 5)) {
           continue;
         }
         multiplexSelect(i);
